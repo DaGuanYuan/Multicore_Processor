@@ -233,7 +233,7 @@ module lab1_imul_IntMulBaseUnitCtrl
     .clk            (clk),
     .reset          (reset),
 
-    .clear          (count_is_max),
+    .clear          (count_is_max || req_go),
     .increment      (1),
     .decrement      (0),
 

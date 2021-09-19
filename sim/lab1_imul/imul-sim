@@ -62,7 +62,7 @@ def resp( a ):
 #----------------------------------------------------------------------
 
 random_small_msgs = []
-for i in xrange(50):
+for i in xrange(2):
   a = random.randint(0,100)
   b = random.randint(0,100)
   random_small_msgs.extend([ req( a, b ), resp( a * b ) ])
