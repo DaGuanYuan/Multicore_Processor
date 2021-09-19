@@ -83,23 +83,24 @@ module vc_CustomIncrementCounter
 #(
   parameter p_count_nbits       = 3,
   parameter p_count_clear_value = 0,
-  parameter p_count_max_value   = 4
+  parameter p_count_max_value   = 4,
+  parameter p_increment_nbits   = 3
 )(
-  input  logic                     clk,
-  input  logic                     reset,
+  input  logic                         clk,
+  input  logic                         reset,
 
   // Operations
 
-  input  logic                     clear,
-  input  logic                     increment,
-  input  logic [p_count_nbits-1:0] increment_value,
-  input  logic                     decrement,
+  input  logic                         clear,
+  input  logic                         increment,
+  input  logic [p_increment_nbits-1:0] increment_value,
+  input  logic                         decrement,
 
   // Outputs
 
-  output logic [p_count_nbits-1:0] count,
-  output logic                     count_is_zero,
-  output logic                     count_is_max
+  output logic [p_count_nbits-1:0]     count,
+  output logic                         count_is_zero,
+  output logic                         count_is_max
 
 );
 
@@ -127,6 +128,10 @@ module vc_CustomIncrementCounter
   logic do_decrement;
   assign do_decrement = ( decrement && (count > 0) );
 
+  //logic [p_count_nbits-1:0] increment_value_zero_extended;
+  //assign increment_value_zero_extended = increment_value;
+
+  /* verilator lint_off WIDTH */
   assign count_next
     = clear        ? (p_count_clear_value)
     : do_increment ? (count + increment_value)

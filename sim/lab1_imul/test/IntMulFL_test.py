@@ -65,6 +65,9 @@ def req( a, b ):
 def resp( a ):
   return Bits( 32, a, trunc=True )
 
+toy_test_msgs = [
+ req(           2  ,           3  ), resp(                       6  )
+]
 #----------------------------------------------------------------------
 # Test Case: small positive * positive
 #----------------------------------------------------------------------
@@ -325,6 +328,7 @@ random_random_msgs = [
 
 test_case_table = mk_test_case_table([
 (                        "msgs             src_delay   sink_delay"),
+[       "toy_test",        toy_test_msgs,         0,         0],
 [    "small_small",     small_small_msgs,         0,         0],
 [    "small_small",     small_small_msgs,         0,         1],
 [    "small_small",     small_small_msgs,        69,         0],

@@ -11,7 +11,8 @@
 `include "vc/regs.v"
 `include "vc/arithmetic.v"
 
-//'define N_ZERO_TO_
+`define N_ZERO_TO_JUMP 4
+`define SHAMT_BITS     3
 // ''' LAB TASK ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 // Define datapath and control unit here.
 // '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -38,7 +39,7 @@ module IntMulAlt_UnitDpath
   input  logic        result_mux_sel,         // sel for mux in front of result reg
   input  logic        add_mux_sel,            // sel for mux in front of result
 
-  input  logic [5:0]  shamt,                  // shift amount
+  input  logic [ `SHAMT_BITS-1 :0]  shamt,    // shift amount
 
   // Status signals
 
@@ -80,7 +81,7 @@ module IntMulAlt_UnitDpath
 
   // A left shifter
 
-  vc_LeftLogicalShifter#(c_nbits, 6) a_shifter
+  vc_LeftLogicalShifter#(c_nbits, `SHAMT_BITS) a_shifter
   (
     .in    (a_reg_out),
     .out   (a_shift_out),
@@ -105,7 +106,7 @@ module IntMulAlt_UnitDpath
   logic [c_nbits-1:0] b_reg_out;
   assign b_lsb = b_reg_out[0];
 
-  assign is_b_l4sb_0 = (b_reg_out[3:0] == 4'b0);       // whether the four bits are all zero
+  assign is_b_l4sb_0 = (b_reg_out[`N_ZERO_TO_JUMP-1:0] == `N_ZERO_TO_JUMP'b0);       // whether the four bits are all zero
 
   vc_Reg#(c_nbits) b_reg
   (
@@ -116,7 +117,7 @@ module IntMulAlt_UnitDpath
 
   // B left shifter
 
-  vc_RightLogicalShifter#(c_nbits, 6) b_shifter
+  vc_RightLogicalShifter#(c_nbits, `SHAMT_BITS) b_shifter
   (
     .in    (b_reg_out),
     .out   (b_shift_out),
@@ -191,19 +192,19 @@ module IntMulAlt_UnitCtrl
 
   // Control signals
 
-  output  logic        result_en,       // Enable for result register
-  output  logic        a_mux_sel,       // Sel for mux in front of A reg
-  output  logic        b_mux_sel,       // sel for mux in front of B reg
-  output  logic        result_mux_sel,  // sel for mux in front of result reg
-  output  logic        add_mux_sel,     // sel for mux in front of result
+  output  logic        result_en,             // Enable for result register
+  output  logic        a_mux_sel,             // Sel for mux in front of A reg
+  output  logic        b_mux_sel,             // sel for mux in front of B reg
+  output  logic        result_mux_sel,        // sel for mux in front of result reg
+  output  logic        add_mux_sel,           // sel for mux in front of result
 
-  output  logic [5:0]  shamt,           // shift amount
+  output  logic [ `SHAMT_BITS-1:0 ]  shamt,   // shift amount
 
   // Status signals
 
-  input   logic         b_lsb,          // least significant bit of b
+  input   logic         b_lsb,                // least significant bit of b
 
-  input   logic         is_b_l4sb_0     // is least 4 significant bits of b zero
+  input   logic         is_b_l4sb_0           // is least 4 significant bits of b zero
 );
 
   //----------------------------------------------------------------------
@@ -215,7 +216,7 @@ module IntMulAlt_UnitCtrl
   localparam STATE_DONE = 2'd2;
 
   localparam INCREMENT_1      = 2'd1;
-  localparam INCREMENT_CUSTOM = 3'd4;
+  localparam INCREMENT_CUSTOM = `SHAMT_BITS'd`N_ZERO_TO_JUMP;
 
   //----------------------------------------------------------------------
   // State
@@ -248,9 +249,9 @@ module IntMulAlt_UnitCtrl
   logic is_counter_32;
 
   // Jumping over the '0's
-  logic [4:0] increment_value;
+  logic [`SHAMT_BITS-1:0] increment_value;
 
-  vc_CustomIncrementCounter#(5,0,31) counter
+  vc_CustomIncrementCounter#(5,0,31,`SHAMT_BITS) counter
   (
     .clk(clk),
     .reset(reset),
@@ -305,11 +306,11 @@ module IntMulAlt_UnitCtrl
   localparam add_mux_reg  = 1'd0;
   localparam add_mux_add  = 1'd1;
 
-  localparam increment_1  = 5'd1;
-  localparam increment_4  = 5'd4;
+  localparam increment_1  = `SHAMT_BITS'd1;
+  localparam increment_n  = `SHAMT_BITS'd`N_ZERO_TO_JUMP;
 
-  localparam shift_1      = 6'd1;
-  localparam shift_4      = 6'd4;
+  localparam shift_1      = `SHAMT_BITS'd1;
+  localparam shift_n      = `SHAMT_BITS'd`N_ZERO_TO_JUMP;
 
   task cs
   (
@@ -321,8 +322,8 @@ module IntMulAlt_UnitCtrl
     input logic       cs_result_en,
     input logic       cs_add_mux_sel,
 
-    input logic [4:0] cs_increment_value,
-    input logic [5:0] cs_shamt          
+    input logic [`SHAMT_BITS-1:0] cs_increment_value,
+    input logic [`SHAMT_BITS-1:0] cs_shamt          
   );
   begin
     req_rdy         = cs_req_rdy;
@@ -344,7 +345,7 @@ module IntMulAlt_UnitCtrl
   logic do_add;
   logic do_nothing;
 
-  assign do_jump     =  is_b_l4sb_0 && ( count < 28 );
+  assign do_jump     =  is_b_l4sb_0 && ( count < ( 31 - (`N_ZERO_TO_JUMP - 1) ) );
   assign do_add      =  b_lsb;
   assign do_nothing  = !b_lsb;
 
@@ -357,7 +358,7 @@ module IntMulAlt_UnitCtrl
       //                                 req resp a mux     b mux    result      result  add mux       increment    shift
       //                                 rdy val  sel       sel      mux sel     en      sel           value        amount
       STATE_IDLE:                    cs( 1,  0,   a_ld,     b_ld,    result_0,   1,      add_mux_x,    increment_1, shift_1);
-      STATE_CALC: if ( do_jump     ) cs( 0,  0,   a_shift,  b_shift, result_add, 1,      add_mux_reg,  increment_4, shift_4);
+      STATE_CALC: if ( do_jump     ) cs( 0,  0,   a_shift,  b_shift, result_add, 1,      add_mux_reg,  increment_n, shift_n);
              else if ( do_add      ) cs( 0,  0,   a_shift,  b_shift, result_add, 1,      add_mux_add,  increment_1, shift_1);
              else if ( do_nothing  ) cs( 0,  0,   a_shift,  b_shift, result_add, 1,      add_mux_reg,  increment_1, shift_1);
       STATE_DONE:                    cs( 0,  1,   a_x,      b_x,     result_add, 1,      add_mux_reg,  increment_1, shift_1);
@@ -404,7 +405,7 @@ module lab1_imul_IntMulAltVRTL
   logic        result_mux_sel;              // sel for mux in front of result reg
   logic        add_mux_sel;                 // sel for mux in front of result
   
-  logic [5:0]  shamt;                       // shift amount
+  logic [ `SHAMT_BITS-1:0 ]  shamt;         // shift amount
 
   // Data signals
 
