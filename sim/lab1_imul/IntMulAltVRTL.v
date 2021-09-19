@@ -13,8 +13,8 @@
 
 // Macro definition of the granularity of jumping over '0's
 //`define N_ZERO_TO_JUMP 2
-//`define N_ZERO_TO_JUMP 3
-`define N_ZERO_TO_JUMP 4
+`define N_ZERO_TO_JUMP 3
+//`define N_ZERO_TO_JUMP 4
 //`define N_ZERO_TO_JUMP 5
 //`define N_ZERO_TO_JUMP 6
 //`define N_ZERO_TO_JUMP 7
@@ -47,7 +47,7 @@ module IntMulAlt_UnitDpath
 
   output logic        b_lsb,                  // least significant bit of b
 
-  output logic        is_b_lnsb_0             // is least n significant bits of b zero
+  output logic        is_b_nlsb_0             // is n least significant bits of b zero
 );
 
   localparam c_nbits = 32;
@@ -109,7 +109,7 @@ module IntMulAlt_UnitDpath
   assign b_lsb = b_reg_out[0];
   
   // Are there n consecutive '0's?
-  assign is_b_lnsb_0 = ( b_reg_out[`N_ZERO_TO_JUMP-1:0] == `N_ZERO_TO_JUMP'b0 );       // whether the four bits are all zero
+  assign is_b_nlsb_0 = ( b_reg_out[`N_ZERO_TO_JUMP-1:0] == `N_ZERO_TO_JUMP'b0 );       // whether the four bits are all zero
 
   vc_Reg#(c_nbits) b_reg
   (
@@ -207,7 +207,7 @@ module IntMulAlt_UnitCtrl
 
   input   logic         b_lsb,                // least significant bit of b
 
-  input   logic         is_b_lnsb_0           // is least n significant bits of b zero
+  input   logic         is_b_nlsb_0           // is n least significant bits of b zero
 );
 
   //----------------------------------------------------------------------
@@ -343,14 +343,15 @@ module IntMulAlt_UnitCtrl
   endtask
 
   // Labels for Mealy transistions
-
-  logic do_jump;
+  
   logic do_add;
   logic do_nothing;
+  logic do_jump;
 
-  assign do_jump     =  is_b_lnsb_0 && ( count < ( 31 - (`N_ZERO_TO_JUMP - 1) ) );
   assign do_add      =  b_lsb;
   assign do_nothing  = !b_lsb;
+  // When there're less than N bits '0's left, we cannot jump anymore
+  assign do_jump     =  is_b_nlsb_0 && ( count < ( 31 - (`N_ZERO_TO_JUMP - 1) ) );
 
   // Set outputs using a control signal "table"
 
@@ -408,7 +409,7 @@ module lab1_imul_IntMulAltVRTL
   // Data signals
 
   logic        b_lsb;                       // least significant bit of b
-  logic        is_b_lnsb_0;                 // is least n significant bits of b zero
+  logic        is_b_nlsb_0;                 // is n least significant bits of b zero
 
   // Control unit
 
@@ -447,7 +448,7 @@ module lab1_imul_IntMulAltVRTL
     vc_trace.append_str( trace_str, str );
     vc_trace.append_str( trace_str, " " );
 
-    $sformat( str, "%x", dpath.is_b_lnsb_0 );
+    $sformat( str, "%x", dpath.is_b_nlsb_0 );
     vc_trace.append_str( trace_str, str );
     vc_trace.append_str( trace_str, " " );
 
