@@ -35,7 +35,7 @@ import re
 
 import random
 
-random.seed(0xdeadbeef)
+random.seed(0xdeadbee)
 
 from pymtl         import *
 
@@ -62,7 +62,7 @@ def resp( a ):
 #----------------------------------------------------------------------
 
 random_small_msgs = []
-for i in xrange(50):
+for i in xrange(150):
   a = random.randint(0,100)
   b = random.randint(0,100)
   random_small_msgs.extend([ req( a, b ), resp( a * b ) ])
@@ -73,7 +73,73 @@ for i in xrange(50):
 # before you begin your evaluation.
 # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
+#----------------------------------------------------------------------
+# Data Set: random large
+#----------------------------------------------------------------------
+
+random_large_msgs = []
+for i in xrange(150):
+  a = random.randint(2**10, 2**15)
+  b = random.randint(2**10, 2**15)
+  random_large_msgs.extend([ req(a, b), resp( a * b ) ])
+
+
+#----------------------------------------------------------------------
+# Data Set: random generally
+#----------------------------------------------------------------------
+
+random_general_msgs = []
+for i in xrange(150):
+  a = random.randint(-2**15, 2**15)
+  b = random.randint(-2**15, 2**15)
+  random_general_msgs.extend([ req(a, b), resp( a * b ) ])
+
+#----------------------------------------------------------------------
+# Data Set: random lomask
+#----------------------------------------------------------------------
+
+random_lomask_msgs = []
+mask = 0xffffff00
+for i in xrange(150):
+  a = random.randint(-2**15, 2**15) & mask
+  b = random.randint(-2**15, 2**15) & mask
+  random_lomask_msgs.extend([ req(a, b), resp( a * b ) ])
 #-------------------------------------------------------------------------
+
+#----------------------------------------------------------------------
+# Data Set: random himask
+#----------------------------------------------------------------------
+
+random_himask_msgs = []
+mask = 0x00ffffff
+for i in xrange(150):
+  a = random.randint(-2**15, 2**15) & mask
+  b = random.randint(-2**15, 2**15) & mask
+  random_himask_msgs.extend([ req(a, b), resp( a * b ) ])
+
+#----------------------------------------------------------------------
+# Data Set: random lohimask
+#----------------------------------------------------------------------
+
+random_lohimask_msgs = []
+mask = 0x00ffff00
+for i in xrange(150):
+  a = random.randint(-2**15, 2**15) & mask
+  b = random.randint(-2**15, 2**15) & mask
+  random_lohimask_msgs.extend([ req(a, b), resp( a * b ) ])
+#----------------------------------------------------------------------
+# Data Set: random sparse
+#----------------------------------------------------------------------
+
+random_sparse_msgs = []
+for i in xrange(200):
+  a = 0
+  b = 0
+  for i in xrange(3):
+    a = a + (1 << random.randint(0, 31))
+    b = b + (1 << random.randint(0, 31))
+  random_sparse_msgs.extend([ req(a, b), resp( a * b ) ])
+
 # Command line processing
 #-------------------------------------------------------------------------
 
@@ -103,7 +169,7 @@ def parse_cmdline():
   # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
   p.add_argument( "--input", default="small",
-    choices=["small"] )
+    choices=["small","large","general","lomask","himask","lohimask","sparse"] )
 
   p.add_argument( "--trace",     action="store_true" )
   p.add_argument( "--stats",     action="store_true" )
@@ -132,6 +198,18 @@ def main():
 
   if opts.input == "small":
     inputs = random_small_msgs
+  elif opts.input == "large":
+    inputs = random_large_msgs
+  elif opts.input == "general":
+    inputs = random_general_msgs
+  elif opts.input == "lomask":
+    inputs = random_lomask_msgs
+  elif opts.input == "himask":
+    inputs = random_himask_msgs
+  elif opts.input == "lohimask":
+    inputs = random_lohimask_msgs
+  elif opts.input == "sparse":
+    inputs = random_sparse_msgs
 
   ninputs = len(inputs[::2])
 
