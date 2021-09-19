@@ -15,6 +15,10 @@
 // Define datapath and control unit here.
 // '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
+//========================================================================
+// IntMulBase Unit Dpath
+//========================================================================
+
 module IntMulBase_UnitDpath
 (
   input  logic        clk,
@@ -165,7 +169,7 @@ module IntMulBase_UnitDpath
 endmodule
 
 //========================================================================
-// GCD Unit Control
+// IntMulBase Unit Control
 //========================================================================
 
 module IntMulBase_UnitCtrl
@@ -334,10 +338,6 @@ endmodule
 // Integer Multiplier Fixed-Latency Implementation
 //========================================================================
 
-  // ''' LAB TASK ''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-  // Instantiate datapath and control models here and then connect them
-  // together.
-  // '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 module lab1_imul_IntMulBaseVRTL
 (
   input  logic        clk,
@@ -351,6 +351,11 @@ module lab1_imul_IntMulBaseVRTL
   input  logic        resp_rdy,
   output logic [31:0] resp_msg
 );
+
+  // ''' LAB TASK ''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+  // Instantiate datapath and control models here and then connect them
+  // together.
+  // '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
   //----------------------------------------------------------------------
   // Connect Control Unit and Datapath
