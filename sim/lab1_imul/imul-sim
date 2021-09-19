@@ -79,10 +79,9 @@ for i in xrange(150):
 
 random_large_msgs = []
 for i in xrange(150):
-  a = random.randint(2**10, 2**15)
-  b = random.randint(2**10, 2**15)
+  a = random.randint(2**10, 2**15) * random.choice([-1, 1])
+  b = random.randint(2**10, 2**15) * random.choice([-1, 1])
   random_large_msgs.extend([ req(a, b), resp( a * b ) ])
-
 
 #----------------------------------------------------------------------
 # Data Set: random generally
@@ -177,7 +176,7 @@ def parse_cmdline():
   p.add_argument( "--dump-vcd",  action="store_true" )
 
   opts = p.parse_args()
-  if opts.help: p.error()
+  if opts.help: p.error() 
   return opts
 
 #-------------------------------------------------------------------------
