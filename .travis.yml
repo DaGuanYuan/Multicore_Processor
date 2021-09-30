@@ -50,5 +50,4 @@ before_script:
 #------------------------------------------------------------------------
 
 script:
- - py.test --verbose ../lab1_imul
-
+ - py.test --verbose ../lab2_proc
