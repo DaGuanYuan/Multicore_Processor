@@ -13,6 +13,7 @@
 
 `include "lab2_proc/TinyRV2InstVRTL.v"
 `include "lab2_proc/ProcDpathComponentsVRTL.v"
+`include "lab1_imul/IntMulAltVRTL.v"
 
 module lab2_proc_ProcBaseDpathVRTL
 #(
