@@ -40,6 +40,12 @@ module lab2_proc_ProcBaseDpathVRTL
   input  logic [31:0] mngr2proc_data,
   output logic [31:0] proc2mngr_data,
 
+  // imul control signals
+  input  logic        imul_req_val_D,
+  output logic        imul_req_rdy_D,
+  output logic        imul_resp_val_X,
+  input  logic        imul_resp_rdy_X,
+
   // control signals (ctrl->dpath)
 
   output logic        imemresp_val_drop,
@@ -50,12 +56,14 @@ module lab2_proc_ProcBaseDpathVRTL
   input  logic [1:0]  pc_sel_F,
 
   input  logic        reg_en_D,
+  input  logic        op1_sel_D,
   input  logic [1:0]  op2_sel_D,
   input  logic [1:0]  csrr_sel_D,
   input  logic [2:0]  imm_type_D,
 
   input  logic        reg_en_X,
   input  logic [3:0]  alu_fn_X,
+  input  logic [1:0]  ex_result_sel_X,
 
   input  logic        reg_en_M,
   input  logic        wb_result_sel_M,
@@ -126,7 +134,7 @@ module lab2_proc_ProcBaseDpathVRTL
   logic   [4:0] inst_rs1_D;
   logic   [4:0] inst_rs2_D;
   logic  [31:0] imm_D;
-
+  
   vc_EnResetReg #(32) pc_reg_D
   (
     .clk    (clk),
@@ -183,6 +191,7 @@ module lab2_proc_ProcBaseDpathVRTL
   );
 
   logic [31:0] op2_D;
+  logic [31:0] op1_D;
 
   logic [31:0] csrr_data_D;
 
@@ -211,6 +220,15 @@ module lab2_proc_ProcBaseDpathVRTL
     .out  (op2_D)
   );
 
+  // op1_sel_mux_D
+  vc_Mux2 #(32) op1_sel_mux_D
+  (
+    .in0  (rf_rdata0_D),
+    .in1  (pc_D),
+    .sel  (op1_sel_D),
+    .out  (op1_D)
+  );
+
   vc_Adder #(32) pc_plus_imm_D
   (
     .in0      (pc_D),
@@ -218,6 +236,27 @@ module lab2_proc_ProcBaseDpathVRTL
     .cin      (1'b0),
     .out      (jal_target_D),
     .cout     ()
+  );
+
+  // Variable Latency Multiplier
+  // req msg for imul
+  logic  [63:0] imul_req_msg_D;
+  logic  [31:0] imul_resp_msg_X;
+  assign imul_req_msg_D[31:0]  = op1_D;
+  assign imul_req_msg_D[63:32] = op2_D;
+  
+  lab1_imul_IntMulAltVRTL imul
+  (
+    .clk      (clk),
+    .reset    (reset),
+
+    .req_val  (imul_req_val_D),
+    .req_rdy  (imul_req_rdy_D),
+    .req_msg  (imul_req_msg_D),
+
+    .resp_val (imul_resp_val_X),
+    .resp_rdy (imul_resp_rdy_X),
+    .resp_msg (imul_resp_msg_X)
   );
 
   //--------------------------------------------------------------------
@@ -232,7 +271,7 @@ module lab2_proc_ProcBaseDpathVRTL
     .clk    (clk),
     .reset  (reset),
     .en     (reg_en_X),
-    .d      (rf_rdata0_D),
+    .d      (op1_D),
     .q      (op1_X)
   );
 
@@ -271,6 +310,17 @@ module lab2_proc_ProcBaseDpathVRTL
   assign ex_result_X = alu_result_X;
 
   assign dmemreq_msg_addr = alu_result_X;
+
+  // ex result select mux
+  // This mux chooses among pc_incr_X, alu_result_X, imul_resp_msg_X
+  vc_Mux3 #(32) ex_result_sel_mux_X
+  (
+    .in0  (),
+    .in1  (alu_result_X),
+    .in2  (imul_resp_msg_X),
+    .sel  (ex_result_sel_X),
+    .out  (ex_result_X)
+  );
 
   //--------------------------------------------------------------------
   // M stage

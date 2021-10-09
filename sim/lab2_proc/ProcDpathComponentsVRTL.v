@@ -21,10 +21,13 @@ module lab2_proc_ImmGenVRTL
   always_comb begin
     case ( imm_type )
       3'd0: // I-type
-        imm = { {21{inst[31]}}, inst[30:25], inst[24:21], inst[20] };
+        imm = { {21{inst[31]}}, inst[30:25], inst[24:21], inst[20] };     // Why not just inst[31:20]???
 
       3'd2: // B-type
         imm = { {20{inst[31]}}, inst[7], inst[30:25], inst[11:8], 1'b0 };
+
+      3'd3: // U-type
+        imm = { {13{inst[31]}}, inst[30:12] };
 
       //''' LAB TASK '''''''''''''''''''''''''''''''''''''''''''''''''''''
       // Add more immediate types
@@ -72,6 +75,9 @@ module lab2_proc_AluVRTL
       
       4'd11   : out = in0;                                      // CP OP0
       4'd12   : out = in1;                                      // CP OP1
+
+      4'd13   : out = { in1[19:0], {12{1'b0}} };                // LUI
+      4'd14   : out = { in1[19:0], in0[11:0] };                 // AUIPC
 
       //''' LAB TASK '''''''''''''''''''''''''''''''''''''''''''''''''''''
       // Add more alu function

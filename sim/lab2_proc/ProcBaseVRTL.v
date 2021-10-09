@@ -101,6 +101,13 @@ module lab2_proc_ProcBaseVRTL
   logic        proc2mngr_enq_val;
   logic        proc2mngr_enq_rdy;
 
+  // imul control signals
+
+  logic        imul_req_val_D;
+  logic        imul_req_rdy_D;
+  logic        imul_resp_val_X;
+  logic        imul_resp_rdy_X;
+
   // imemresp signals after the drop unit
 
   logic        imemresp_val_drop;
@@ -116,12 +123,14 @@ module lab2_proc_ProcBaseVRTL
   logic [1:0]  pc_sel_F;
 
   logic        reg_en_D;
+  logic        op1_sel_D;
   logic [1:0]  op2_sel_D;
   logic [1:0]  csrr_sel_D;
   logic [2:0]  imm_type_D;
 
   logic        reg_en_X;
   logic [3:0]  alu_fn_X;
+  logic [1:0]  ex_result_sel_X;
 
   logic        reg_en_M;
   logic        wb_result_sel_M;
@@ -208,18 +217,27 @@ module lab2_proc_ProcBaseVRTL
     .proc2mngr_val          (proc2mngr_enq_val),
     .proc2mngr_rdy          (proc2mngr_enq_rdy),
 
+    // imul control signals
+
+    .imul_req_val_D         (imul_req_val_D),
+    .imul_req_rdy_D         (imul_req_rdy_D),
+    .imul_resp_val_X        (imul_resp_val_X),
+    .imul_resp_rdy_X        (imul_resp_rdy_X),
+
     // control signals (ctrl->dpath)
 
     .reg_en_F               (reg_en_F),
     .pc_sel_F               (pc_sel_F),
 
     .reg_en_D               (reg_en_D),
+    .op1_sel_D              (op1_sel_D),
     .op2_sel_D              (op2_sel_D),
     .csrr_sel_D             (csrr_sel_D),
     .imm_type_D             (imm_type_D),
 
     .reg_en_X               (reg_en_X),
     .alu_fn_X               (alu_fn_X),
+    .ex_result_sel_X        (ex_result_sel_X),
 
     .reg_en_M               (reg_en_M),
     .wb_result_sel_M        (wb_result_sel_M),
@@ -317,6 +335,13 @@ module lab2_proc_ProcBaseVRTL
     .mngr2proc_data          (mngr2proc_msg),
     .proc2mngr_data          (proc2mngr_enq_msg),
 
+    // imul control signals
+
+    .imul_req_val_D         (imul_req_val_D),
+    .imul_req_rdy_D         (imul_req_rdy_D),
+    .imul_resp_val_X        (imul_resp_val_X),
+    .imul_resp_rdy_X        (imul_resp_rdy_X),
+
     // control signals (ctrl->dpath)
 
     .imemresp_val_drop       (imemresp_val_drop),
@@ -327,12 +352,14 @@ module lab2_proc_ProcBaseVRTL
     .pc_sel_F                (pc_sel_F),
 
     .reg_en_D                (reg_en_D),
+    .op1_sel_D               (op1_sel_D),
     .op2_sel_D               (op2_sel_D),
     .csrr_sel_D              (csrr_sel_D),
     .imm_type_D              (imm_type_D),
 
     .reg_en_X                (reg_en_X),
     .alu_fn_X                (alu_fn_X),
+    .ex_result_sel_X         (ex_result_sel_X),
 
     .reg_en_M                (reg_en_M),
     .wb_result_sel_M         (wb_result_sel_M),

@@ -40,18 +40,26 @@ module lab2_proc_ProcBaseCtrlVRTL
   output logic        proc2mngr_val,
   input  logic        proc2mngr_rdy,
 
+  // imul control signals
+  output logic        imul_req_val_D,
+  input  logic        imul_req_rdy_D,
+  input  logic        imul_resp_val_X,
+  output logic        imul_resp_rdy_X,
+
   // control signals (ctrl->dpath)
 
   output logic        reg_en_F,
   output logic [1:0]  pc_sel_F,
 
   output logic        reg_en_D,
+  output logic        op1_sel_D,
   output logic [1:0]  op2_sel_D,
   output logic [1:0]  csrr_sel_D,
   output logic [2:0]  imm_type_D,
 
   output logic        reg_en_X,
   output logic [3:0]  alu_fn_X,
+  output logic [1:0]  ex_result_sel_X,
 
   output logic        reg_en_M,
   output logic        wb_result_sel_M,
@@ -252,6 +260,12 @@ module lab2_proc_ProcBaseCtrlVRTL
 
   // Operand 1 Mux Select
 
+  localparam am_x     = 1'bx; // Don't care
+  localparam am_rf    = 1'd0; // Use data from register file
+  localparam am_pc    = 1'd1; // Use data from pc
+
+  // Operand 2 Mux Select
+
   localparam bm_x     = 2'bx; // Don't care
   localparam bm_rf    = 2'd0; // Use data from register file
   localparam bm_imm   = 2'd1; // Use sign-extended immediate
@@ -262,7 +276,7 @@ module lab2_proc_ProcBaseCtrlVRTL
   localparam alu_x    = 4'bx;
   localparam alu_add  = 4'd0;
   localparam alu_sub  = 4'd1;
-  localparam alu_mul  = 4'd2;
+  localparam alu_mul  = 4'd2;           // void encoding because mul does not go through alu
   localparam alu_and  = 4'd3;
   localparam alu_or   = 4'd4;
   localparam alu_xor  = 4'd5;
@@ -273,6 +287,14 @@ module lab2_proc_ProcBaseCtrlVRTL
   localparam alu_sll  = 4'd10;
   localparam alu_cp0  = 4'd11;
   localparam alu_cp1  = 4'd12;
+  localparam alu_lui  = 4'd13;
+  localparam alu_auipc = 4'd14;
+
+  // Execution Result Mux Select
+  localparam xm_x      = 2'bx;
+  localparam xm_pc     = 2'd0;
+  localparam xm_alu    = 2'd1;
+  localparam xm_imul   = 2'd2;
 
   // Immediate Type
   localparam imm_x    = 3'bx;
@@ -301,6 +323,7 @@ module lab2_proc_ProcBaseCtrlVRTL
   logic       rs1_en_D;
   logic       rs2_en_D;
   logic [3:0] alu_fn_D;
+  logic [1:0] ex_result_sel_D;
   logic [1:0] dmemreq_type_D;
   logic       wb_result_sel_D;
   logic       rf_wen_pending_D;
@@ -316,9 +339,11 @@ module lab2_proc_ProcBaseCtrlVRTL
     input logic [2:0] cs_br_type,
     input logic [2:0] cs_imm_type,
     input logic       cs_rs1_en,
+    input logic       cs_op1_sel,
     input logic [1:0] cs_op2_sel,
     input logic       cs_rs2_en,
     input logic [3:0] cs_alu_fn,
+    input logic [1:0] cs_ex_result_sel,
     input logic [1:0] cs_dmemreq_type,
     input logic       cs_wb_result_sel,
     input logic       cs_rf_wen_pending,
@@ -330,9 +355,11 @@ module lab2_proc_ProcBaseCtrlVRTL
     br_type_D             = cs_br_type;
     imm_type_D            = cs_imm_type;
     rs1_en_D              = cs_rs1_en;
+    op1_sel_D             = cs_op1_sel;
     op2_sel_D             = cs_op2_sel;
     rs2_en_D              = cs_rs2_en;
     alu_fn_D              = cs_alu_fn;
+    ex_result_sel_D       = cs_ex_result_sel;
     dmemreq_type_D        = cs_dmemreq_type;
     wb_result_sel_D       = cs_wb_result_sel;
     rf_wen_pending_D      = cs_rf_wen_pending;
@@ -347,29 +374,44 @@ module lab2_proc_ProcBaseCtrlVRTL
 
     casez ( inst_D )
 
-      //                           br      imm  rs1  op2    rs2 alu      dmm wbmux rf
-      //                       val type    type  en  muxsel  en fn       typ sel   wen csrr csrw
-      `RV2ISA_INST_NOP     :cs( y, br_na,  imm_x, n, bm_x,   n, alu_x,   nr, wm_a, n,  n,   n    );
-      `RV2ISA_INST_ADD     :cs( y, br_na,  imm_x, y, bm_rf,  y, alu_add, nr, wm_a, y,  n,   n    );
-      `RV2ISA_INST_SUB     :cs( y, br_na,  imm_x, y, bm_rf,  y, alu_sub, nr, wm_a, y,  n,   n    );
-      `RV2ISA_INST_AND     :cs( y, br_na,  imm_x, y, bm_rf,  y, alu_and, nr, wm_a, y,  n,   n    );
-      `RV2ISA_INST_OR      :cs( y, br_na,  imm_x, y, bm_rf,  y, alu_or,  nr, wm_a, y,  n,   n    );
-      `RV2ISA_INST_XOR     :cs( y, br_na,  imm_x, y, bm_rf,  y, alu_xor, nr, wm_a, y,  n,   n    );
-      `RV2ISA_INST_SLT     :cs( y, br_na,  imm_x, y, bm_rf,  y, alu_slt, nr, wm_a, y,  n,   n    );
-      `RV2ISA_INST_SLTU    :cs( y, br_na,  imm_x, y, bm_rf,  y, alu_sltu,nr, wm_a, y,  n,   n    );
-      `RV2ISA_INST_SRA     :cs( y, br_na,  imm_x, y, bm_rf,  y, alu_sra, nr, wm_a, y,  n,   n    );
-      `RV2ISA_INST_SRL     :cs( y, br_na,  imm_x, y, bm_rf,  y, alu_srl, nr, wm_a, y,  n,   n    );
-      `RV2ISA_INST_SLL     :cs( y, br_na,  imm_x, y, bm_rf,  y, alu_sll, nr, wm_a, y,  n,   n    );
-      `RV2ISA_INST_LW      :cs( y, br_na,  imm_i, y, bm_imm, n, alu_add, ld, wm_m, y,  n,   n    );
-      `RV2ISA_INST_BNE     :cs( y, br_bne, imm_b, y, bm_rf,  y, alu_x,   nr, wm_a, n,  n,   n    );
-      `RV2ISA_INST_CSRR    :cs( y, br_na,  imm_i, n, bm_csr, n, alu_cp1, nr, wm_a, y,  y,   n    );
-      `RV2ISA_INST_CSRW    :cs( y, br_na,  imm_i, y, bm_rf,  n, alu_cp0, nr, wm_a, n,  n,   y    );
+      //                           br      imm  rs1  op1     op2    rs2 alu      ex     dmm wbmux rf
+      //                       val type    type  en  muxsel  muxsel  en fn       result typ sel   wen csrr csrw
+      `RV2ISA_INST_NOP     :cs( y, br_na,  imm_x, n, am_x,   bm_x,   n, alu_x,   xm_x   ,nr, wm_a, n,  n,   n    );
+
+      `RV2ISA_INST_ADD     :cs( y, br_na,  imm_x, y, am_rf,  bm_rf,  y, alu_add, xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_SUB     :cs( y, br_na,  imm_x, y, am_rf,  bm_rf,  y, alu_sub, xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_MUL     :cs( y, br_na,  imm_x, y, am_rf,  bm_rf,  y, alu_x,   xm_imul,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_AND     :cs( y, br_na,  imm_x, y, am_rf,  bm_rf,  y, alu_and, xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_OR      :cs( y, br_na,  imm_x, y, am_rf,  bm_rf,  y, alu_or,  xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_XOR     :cs( y, br_na,  imm_x, y, am_rf,  bm_rf,  y, alu_xor, xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_SLT     :cs( y, br_na,  imm_x, y, am_rf,  bm_rf,  y, alu_slt, xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_SLTU    :cs( y, br_na,  imm_x, y, am_rf,  bm_rf,  y, alu_sltu,xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_SRA     :cs( y, br_na,  imm_x, y, am_rf,  bm_rf,  y, alu_sra, xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_SRL     :cs( y, br_na,  imm_x, y, am_rf,  bm_rf,  y, alu_srl, xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_SLL     :cs( y, br_na,  imm_x, y, am_rf,  bm_rf,  y, alu_sll, xm_alu ,nr, wm_a, y,  n,   n    );
+
+      `RV2ISA_INST_ADDI    :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, y, alu_add, xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_ANDI    :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, y, alu_and, xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_ORI     :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, y, alu_or,  xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_XORI    :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, y, alu_xor, xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_SLTI    :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, y, alu_slt, xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_SLTIU   :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, y, alu_sltu,xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_SRAI    :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, y, alu_sra, xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_SRLI    :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, y, alu_srl, xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_SLLI    :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, y, alu_sll, xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_LUI     :cs( y, br_na,  imm_u, y, am_rf,  bm_imm, y, alu_lui, xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_AUIPC   :cs( y, br_na,  imm_u, y, am_pc,  bm_imm, y, alu_auipc,xm_alu ,nr, wm_a, y,  n,   n    );
+
+      `RV2ISA_INST_LW      :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, n, alu_add, xm_alu ,ld, wm_m, y,  n,   n    );
+      `RV2ISA_INST_BNE     :cs( y, br_bne, imm_b, y, am_rf,  bm_rf,  y, alu_x,   xm_x   ,nr, wm_a, n,  n,   n    );
+      `RV2ISA_INST_CSRR    :cs( y, br_na,  imm_i, n, am_rf,  bm_csr, n, alu_cp1, xm_alu ,nr, wm_a, y,  y,   n    );
+      `RV2ISA_INST_CSRW    :cs( y, br_na,  imm_i, y, am_rf,  bm_rf,  n, alu_cp0, xm_alu ,nr, wm_a, n,  n,   y    );
 
       //''' LAB TASK '''''''''''''''''''''''''''''''''''''''''''''''''''''
       // Add more instructions to the control signal table
       //''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-      default              :cs( n, br_x,  imm_x, n, bm_x,    n, alu_x,   nr, wm_x, n,  n,   n    );
+      default              :cs( n, br_x,   imm_x, n, am_x,   bm_x,    n, alu_x,   xm_x   ,nr, wm_x, n,  n,   n    );
 
     endcase
   end // always_comb
@@ -397,6 +439,13 @@ module lab2_proc_ProcBaseCtrlVRTL
       csrr_sel_D       = 2'h2;
   end
 
+  // imul signal for D
+
+  assign imul_req_val_D  = val_D && !stall_D && ( ex_result_sel_D == xm_imul );
+  
+  logic  ostall_imul_D;
+  assign ostall_imul_D = val_D && !imul_req_rdy_D;
+  
   // mngr2proc_rdy signal for csrr instruction
 
   assign mngr2proc_rdy  = val_D && !stall_D && mngr2proc_rdy_D;
@@ -455,7 +504,8 @@ module lab2_proc_ProcBaseCtrlVRTL
 
   // Final ostall signal
 
-  assign ostall_D = val_D && ( ostall_mngr2proc_D || ostall_hazard_D );
+  //assign ostall_D = val_D && ( ostall_mngr2proc_D || ostall_hazard_D );
+  assign ostall_D = val_D && ( ostall_imul_D || ostall_mngr2proc_D || ostall_hazard_D );
 
   // osquash due to jump instruction in D stage (not implemented yet)
 
@@ -499,6 +549,7 @@ module lab2_proc_ProcBaseCtrlVRTL
       rf_wen_pending_X<= rf_wen_pending_D;
       inst_X          <= inst_D;
       alu_fn_X        <= alu_fn_D;
+      ex_result_sel_X <= ex_result_sel_D;
       rf_waddr_X      <= rf_waddr_D;
       proc2mngr_val_X <= proc2mngr_val_D;
       dmemreq_type_X  <= dmemreq_type_D;
@@ -519,9 +570,21 @@ module lab2_proc_ProcBaseCtrlVRTL
     end
   end
 
-  // ostall due to dmemreq not ready.
+  // imul signal for X
 
-  assign ostall_X = val_X && ( dmemreq_type_X != nr ) && !dmemreq_rdy;
+  assign imul_resp_rdy_X  = val_X && !stall_X;
+
+  logic  ostall_imul_X;
+  assign ostall_imul_X = val_X && !imul_resp_val_X && !imul_req_rdy_D;
+  // !imul_req_rdy_D to make sure that imul is calculating
+
+  // ostall due to dmemreq not ready.
+  
+  logic  ostall_dmem_X;
+  assign ostall_dmem_X = ( dmemreq_type_X != nr ) && !dmemreq_rdy;
+
+  // ostall due to dmemreq and imul
+  assign ostall_X = val_X && ( ostall_dmem_X || ostall_imul_X );
 
   // osquash due to taken branch, notice we can't osquash if current
   // stage stalls, otherwise we will send osquash twice.
