@@ -51,9 +51,13 @@ import inst_sub
 def test_sub( name, test, dump_vcd ):
   run_test( ProcBaseRTL, test, dump_vcd )
 
+<<<<<<< c0f926625ba7a47f1b297dd6d5ad55bbc3d48661
 def test_sub_rand_delays( dump_vcd ):
   run_test( ProcBaseRTL, inst_sub.gen_random_test, dump_vcd,
             src_delay=3, sink_delay=5, mem_stall_prob=0.5, mem_latency=3 )
+=======
+
+>>>>>>> Pull test case from Zehua
 
 # ''' LAB TASK '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 # random stall and delay
