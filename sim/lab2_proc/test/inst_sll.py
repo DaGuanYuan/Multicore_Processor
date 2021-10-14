@@ -107,6 +107,7 @@ def gen_value_test():
     gen_rr_value_test( "sll", 0x00000000, 0xffff8000, 0x00000000),
     gen_rr_value_test( "sll", 0x80000000, 0x00000000, 0x80000000),
     gen_rr_value_test( "sll", 0x80000000, 0xffff8000, 0x80000000),
+    gen_rr_value_test( "sll", 0x80000000, 0xffff8000, 0x80000000),
     gen_rr_value_test( "sll", 0x00000000, 0x00007fff, 0x00000000),
     gen_rr_value_test( "sll", 0x7fffffff, 0x00ffff00, 0x7fffffff),
     gen_rr_value_test( "sll", 0x7fffffff, 0x00007fff, 0x80000000),
