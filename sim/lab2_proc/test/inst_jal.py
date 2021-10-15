@@ -52,3 +52,51 @@ def gen_basic_test():
 # ''' LAB TASK ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 # Define additional directed and random test cases.
 # '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+def gen_one_jump_test():
+  return [
+    gen_jal_simple_test(),
+    gen_jal_simple_test(),
+    gen_jal_simple_test(),
+    gen_jal_simple_test(),
+    gen_jal_simple_test(),
+    gen_jal_simple_test(),
+  ]
+
+def gen_seq_test():
+  return[
+    gen_jal_seq_template(),
+    gen_jal_seq_template(),
+    gen_jal_seq_template(),
+    gen_jal_seq_template(),
+    gen_jal_seq_template(),
+    gen_jal_seq_template()
+  ]
+
+def gen_back_test():
+  return[
+    gen_jal_back_template(),
+    gen_jal_back_template(),
+    gen_jal_back_template(),
+    gen_jal_back_template(),
+    gen_jal_back_template(),
+    gen_jal_back_template()
+  ]
+
+def gen_seq_and_back_test():
+  return [
+    gen_jal_test(),
+    gen_jal_test(),
+    gen_jal_test(),
+    gen_jal_test(),
+    gen_jal_test(),
+    gen_jal_test(),
+  ]
+
+
+def gen_random_test():
+  asm_code = []
+  for i in xrange(25):
+    target = "label_{}".format( random.randint(1, 5) )
+    asm_code.append( gen_jal_value_test("jal", target) )
+  return asm_code

@@ -9,6 +9,11 @@
 `include "vc/queues.v"
 `include "vc/trace.v"
 
+`include "lab2_proc/TinyRV2InstVRTL.v"
+`include "lab2_proc/ProcAltCtrlVRTL.v"
+`include "lab2_proc/ProcAltDpathVRTL.v"
+`include "lab2_proc/DropUnitVRTL.v"
+
 //''' LAB TASK '''''''''''''''''''''''''''''''''''''''''''''''''''''
 // Include components here
 //''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -95,6 +100,7 @@ module lab2_proc_ProcAltVRTL
   mem_req_4B_t dmemreq_enq_msg;
   logic        dmemreq_enq_val;
   logic        dmemreq_enq_rdy;
+  logic [2:0]  dmemreq_type;
 
   // proc2mngr signals before bypass queue
 
@@ -110,6 +116,80 @@ module lab2_proc_ProcAltVRTL
   // imemresp drop signal
 
   logic        imemresp_drop;
+
+  // control signals (ctrl->dpath)
+
+  logic        reg_en_F;
+  logic [1:0]  pc_sel_F;
+
+  logic        reg_en_D;
+  logic        op1_sel_D;
+  logic [1:0]  op2_sel_D;
+  logic [1:0]  csrr_sel_D;
+  logic [2:0]  imm_type_D;
+  logic        imul_req_val_D;
+  logic        imul_req_rdy_D;
+  logic [1:0]  op1_byp_sel_D;
+  logic [1:0]  op2_byp_sel_D;
+
+  logic        reg_en_X;
+  logic [1:0]  ex_result_sel_X;
+  logic [3:0]  alu_fn_X; 
+  logic        imul_resp_val_X;
+  logic        imul_resp_rdy_X;
+
+  logic        reg_en_M;
+  logic        wb_result_sel_M;
+
+  logic        reg_en_W;
+  logic [4:0]  rf_waddr_W;
+  logic        rf_wen_W;
+  logic        stats_en_wen_W;
+
+  // status signals (dpath->ctrl)
+
+  logic [31:0] inst_D;
+  logic        br_cond_eq_X;
+  logic        br_cond_lt_X;
+  logic        br_cond_ltu_X;
+
+  //----------------------------------------------------------------------
+  // Pack Memory Request Messages
+  //----------------------------------------------------------------------
+  
+  assign imemreq_enq_msg.type_  = `VC_MEM_REQ_MSG_TYPE_READ;
+  assign imemreq_enq_msg.opaque = 8'b0;
+  assign imemreq_enq_msg.addr   = imemreq_msg_addr;
+  assign imemreq_enq_msg.len    = 2'd0;
+  assign imemreq_enq_msg.data   = 32'bx;
+
+  assign dmemreq_enq_msg.type_  = dmemreq_type;
+  assign dmemreq_enq_msg.opaque = 8'b0;
+  assign dmemreq_enq_msg.addr   = dmemreq_msg_addr;
+  assign dmemreq_enq_msg.len    = 2'd0;
+  assign dmemreq_enq_msg.data   = dmemreq_msg_data;
+
+  //----------------------------------------------------------------------
+  // Imem Drop Unit
+  //----------------------------------------------------------------------
+
+  mem_resp_4B_t imemresp_msg_drop;
+
+  vc_DropUnit #($bits(mem_resp_4B_t)) imem_drop_unit
+  (
+    .clk      (clk),
+    .reset    (reset),
+
+    .drop     (imemresp_drop),
+
+    .in_msg   (imemresp_msg),
+    .in_val   (imemresp_val),
+    .in_rdy   (imemresp_rdy),
+
+    .out_msg  (imemresp_msg_drop),
+    .out_val  (imemresp_val_drop),
+    .out_rdy  (imemresp_rdy_drop)
+  );
 
   //----------------------------------------------------------------------
   // Bypass Queue
@@ -163,6 +243,157 @@ module lab2_proc_ProcAltVRTL
   //''' LAB TASK '''''''''''''''''''''''''''''''''''''''''''''''''''''
   // Instantiate and connect components here
   //''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+  //============================
+  // Control Unit
+  //============================
+  
+  lab2_proc_ProcAltCtrlVRTL ctrl
+  (
+    .clk                    (clk),
+    .reset                  (reset),
+
+    // Instruction Memory Port
+
+    .imemreq_val            (imemreq_enq_val),
+    .imemreq_rdy            (imemreq_enq_rdy),
+    .imemresp_val           (imemresp_val_drop),
+    .imemresp_rdy           (imemresp_rdy_drop),
+
+    // Drop signal
+
+    .imemresp_drop          (imemresp_drop),
+
+    // Data Memory Port
+
+    .dmemreq_val            (dmemreq_enq_val),
+    .dmemreq_rdy            (dmemreq_enq_rdy),
+    .dmemresp_val           (dmemresp_val),
+    .dmemresp_rdy           (dmemresp_rdy),
+
+    .dmemreq_type           (dmemreq_type),
+
+    // mngr communication ports
+
+    .mngr2proc_val          (mngr2proc_val),
+    .mngr2proc_rdy          (mngr2proc_rdy),
+    .proc2mngr_val          (proc2mngr_enq_val),
+    .proc2mngr_rdy          (proc2mngr_enq_rdy),
+
+    // control signals (ctrl->dpath)
+
+    .reg_en_F               (reg_en_F),
+    .pc_sel_F               (pc_sel_F),
+
+    .reg_en_D               (reg_en_D),
+    .op1_sel_D              (op1_sel_D),
+    .op2_sel_D              (op2_sel_D),
+    .csrr_sel_D             (csrr_sel_D),
+    .imm_type_D             (imm_type_D),
+    .imul_req_val_D         (imul_req_val_D),
+    .imul_req_rdy_D         (imul_req_rdy_D),
+    .op1_byp_sel_D          (op1_byp_sel_D),
+    .op2_byp_sel_D          (op2_byp_sel_D),
+
+    .reg_en_X               (reg_en_X),
+    .ex_result_sel_X        (ex_result_sel_X),
+    .alu_fn_X               (alu_fn_X),
+    .imul_resp_val_X        (imul_resp_val_X),
+    .imul_resp_rdy_X        (imul_resp_rdy_X),
+
+    .reg_en_M               (reg_en_M),
+    .wb_result_sel_M        (wb_result_sel_M),
+
+    .reg_en_W               (reg_en_W),
+    .rf_waddr_W             (rf_waddr_W),
+    .rf_wen_W               (rf_wen_W),
+    .stats_en_wen_W         (stats_en_wen_W),
+
+    // status signals (dpath->ctrl)
+    .br_cond_eq_X           (br_cond_eq_X),
+    .br_cond_lt_X           (br_cond_lt_X),
+    .br_cond_ltu_X          (br_cond_ltu_X),
+    .inst_D                 (inst_D),
+    .commit_inst            (commit_inst)
+  );
+
+  // ======================
+  // datapath
+  // ======================
+  logic [31:0] op2;
+  logic [31:0] imm_gen;
+
+  lab2_proc_ProcAltDpathVRTL
+  #(
+    .p_num_cores             (p_num_cores)
+  )
+  dpath
+  (
+    .clk                     (clk),
+    .reset                   (reset),
+
+    // core id
+    .core_id                 (core_id),
+
+    // Instruction Memory Port
+
+    .imemreq_msg_addr        (imemreq_msg_addr),
+    .imemresp_msg            (imemresp_msg_drop),
+
+    // Data Memory Port
+
+    .dmemreq_msg_addr        (dmemreq_msg_addr),
+    .dmemreq_msg_data        (dmemreq_msg_data),
+    .dmemresp_msg_data       (dmemresp_msg.data),
+
+    // mngr communication ports
+
+    .mngr2proc_data          (mngr2proc_msg),
+    .proc2mngr_data          (proc2mngr_enq_msg),
+
+    // control signals (ctrl->dpath)
+
+    .imemresp_val_drop       (imemresp_val_drop),
+    .imemresp_rdy_drop       (imemresp_rdy_drop),
+    .imemresp_drop           (imemresp_drop),
+
+    .reg_en_F                (reg_en_F),
+    .pc_sel_F                (pc_sel_F),
+
+    .reg_en_D                (reg_en_D),
+    .op1_sel_D               (op1_sel_D),
+    .op2_sel_D               (op2_sel_D),
+    .csrr_sel_D              (csrr_sel_D),
+    .imm_type_D              (imm_type_D),
+    .imul_req_val_D          (imul_req_val_D),
+    .imul_req_rdy_D          (imul_req_rdy_D),
+    .op1_byp_sel_D           (op1_byp_sel_D),
+    .op2_byp_sel_D           (op2_byp_sel_D),
+
+    .ex_result_sel_X         (ex_result_sel_X),
+    .reg_en_X                (reg_en_X),
+    .imul_resp_val_X         (imul_resp_val_X),
+    .imul_resp_rdy_X         (imul_resp_rdy_X),
+    .alu_fn_X                (alu_fn_X), 
+
+    .reg_en_M                (reg_en_M),
+    .wb_result_sel_M         (wb_result_sel_M),
+
+    .reg_en_W                (reg_en_W),
+    .rf_waddr_W              (rf_waddr_W),
+    .rf_wen_W                (rf_wen_W),
+    .stats_en_wen_W          (stats_en_wen_W),
+
+    // status signals (dpath->ctrl)
+
+    .inst_D                  (inst_D),
+    .br_cond_eq_X            (br_cond_eq_X),
+    .br_cond_lt_X            (br_cond_lt_X),
+    .br_cond_ltu_X           (br_cond_ltu_X),
+
+    // stats_en
+
+    .stats_en                (stats_en)
+  );
 
   //----------------------------------------------------------------------
   // Line tracing
@@ -200,6 +431,36 @@ module lab2_proc_ProcAltVRTL
       vc_trace.append_chars( trace_str, " ", 23-1 );
     end else
       vc_trace.append_str( trace_str, { 3896'b0, rv2isa.disasm( ctrl.inst_D ) } );
+
+    $sformat( str, " %x, ", dpath.op1_byp_sel_D );
+    vc_trace.append_str( trace_str,  " op1_byp_sel: " );
+    vc_trace.append_str( trace_str,  str );
+
+    $sformat( str, " %x, ", dpath.op2_byp_sel_D );
+    vc_trace.append_str( trace_str,  " op2_byp_sel: " );
+    vc_trace.append_str( trace_str,  str );
+
+     $sformat( str, " %x, ", ctrl.dmemreq_type_X );
+    vc_trace.append_str( trace_str,  "dmemreq_type_X: " );
+    vc_trace.append_str( trace_str,  str );
+
+    $sformat( str, " %x, ", ctrl.bypass_waddr_W_rs1_D );
+    vc_trace.append_str( trace_str,  "bypass_waddr_W_rs1_D: " );
+    vc_trace.append_str( trace_str,  str );
+
+    
+
+    // $sformat( str, " %x, ", ctrl.ostall_load_use_X_rs2_D );
+    // vc_trace.append_str( trace_str,  "load_use_X_rs2_D: " );
+    // vc_trace.append_str( trace_str,  str );
+
+    // $sformat( str, " %x", dpath.op1_bprf );
+    // vc_trace.append_str( trace_str,  " op1_bprf: " );
+    // vc_trace.append_str( trace_str,  str );
+
+    // $sformat( str, " %x", dpath.op2_bprf );
+    // vc_trace.append_str( trace_str,  " op2_bprf: " );
+    // vc_trace.append_str( trace_str,  str );
 
     vc_trace.append_str( trace_str, "|" );
 

@@ -1,0 +1,7 @@
+============================= test session starts ==============================
+platform linux2 -- Python 2.7.10[pypy-5.4.1-final], pytest-3.0.3, py-1.4.31, pluggy-0.4.0 -- /classes/ece4750/install/venv-pkgs/x86_64-rhel7/pypy5.4.1/bin/pypy
+cachedir: .cache
+rootdir: /home/mz588/ece4750/lab-group11/lab-group11_mz588/lab-group11, inifile: 
+plugins: xdist-1.15.0
+collecting ... 
+========================= no tests ran in 0.00 seconds =========================

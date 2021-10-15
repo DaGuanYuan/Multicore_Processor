@@ -88,12 +88,14 @@ module lab2_proc_ProcBaseVRTL
   // dmem req before pack
 
   logic [31:0] dmemreq_msg_addr;
+  logic [31:0] dmemreq_msg_data;
 
   // dmemreq after pack before bypass queue
 
   mem_req_4B_t dmemreq_enq_msg;
   logic        dmemreq_enq_val;
   logic        dmemreq_enq_rdy;
+  logic [2:0]  dmemreq_type;
 
   // proc2mngr signals before bypass queue
 
@@ -116,12 +118,26 @@ module lab2_proc_ProcBaseVRTL
   logic [1:0]  pc_sel_F;
 
   logic        reg_en_D;
+  logic        op1_sel_D;
   logic [1:0]  op2_sel_D;
   logic [1:0]  csrr_sel_D;
   logic [2:0]  imm_type_D;
+  logic        imul_req_val_D;
+  logic        imul_req_rdy_D;
+  logic [63:0] imul_req_msg; //for debug
 
   logic        reg_en_X;
-  logic [3:0]  alu_fn_X;
+  logic [1:0]  ex_result_sel_X;
+  logic [3:0]  alu_fn_X; 
+  logic        imul_resp_val_X;
+  logic        imul_resp_rdy_X;
+  logic [31:0] alu_reslt; // For debug
+  logic [31:0] ex_result_X_out; // for debug
+  logic [31:0] op1_X_out; //for debug
+  logic [31:0] op2_X_out; // for debug
+  logic [1:0]  pc_sel_X; // for debug
+  logic        pc_redirect_X; // for debug
+  logic [3:0]  br_type_X_out; // debug
 
   logic        reg_en_M;
   logic        wb_result_sel_M;
@@ -135,6 +151,8 @@ module lab2_proc_ProcBaseVRTL
 
   logic [31:0] inst_D;
   logic        br_cond_eq_X;
+  logic        br_cond_lt_X;
+  logic        br_cond_ltu_X;
 
   //----------------------------------------------------------------------
   // Pack Memory Request Messages
@@ -146,11 +164,13 @@ module lab2_proc_ProcBaseVRTL
   assign imemreq_enq_msg.len    = 2'd0;
   assign imemreq_enq_msg.data   = 32'bx;
 
-  assign dmemreq_enq_msg.type_  = `VC_MEM_REQ_MSG_TYPE_READ;
+  // assign dmemreq_enq_msg.type_  = `VC_MEM_REQ_MSG_TYPE_READ;
+  // assign dmemreq_enq_msg.type_  = `VC_MEM_REQ_MSG_TYPE_WRITE;
+  assign dmemreq_enq_msg.type_  = dmemreq_type;
   assign dmemreq_enq_msg.opaque = 8'b0;
   assign dmemreq_enq_msg.addr   = dmemreq_msg_addr;
   assign dmemreq_enq_msg.len    = 2'd0;
-  assign dmemreq_enq_msg.data   = 32'b0;
+  assign dmemreq_enq_msg.data   = dmemreq_msg_data;
 
   //----------------------------------------------------------------------
   // Imem Drop Unit
@@ -201,6 +221,8 @@ module lab2_proc_ProcBaseVRTL
     .dmemresp_val           (dmemresp_val),
     .dmemresp_rdy           (dmemresp_rdy),
 
+    .dmemreq_type           (dmemreq_type),
+
     // mngr communication ports
 
     .mngr2proc_val          (mngr2proc_val),
@@ -214,12 +236,18 @@ module lab2_proc_ProcBaseVRTL
     .pc_sel_F               (pc_sel_F),
 
     .reg_en_D               (reg_en_D),
+    .op1_sel_D              (op1_sel_D),
     .op2_sel_D              (op2_sel_D),
     .csrr_sel_D             (csrr_sel_D),
     .imm_type_D             (imm_type_D),
+    .imul_req_val_D         (imul_req_val_D),
+    .imul_req_rdy_D         (imul_req_rdy_D),
 
     .reg_en_X               (reg_en_X),
+    .ex_result_sel_X        (ex_result_sel_X),
     .alu_fn_X               (alu_fn_X),
+    .imul_resp_val_X        (imul_resp_val_X),
+    .imul_resp_rdy_X        (imul_resp_rdy_X),
 
     .reg_en_M               (reg_en_M),
     .wb_result_sel_M        (wb_result_sel_M),
@@ -230,10 +258,10 @@ module lab2_proc_ProcBaseVRTL
     .stats_en_wen_W         (stats_en_wen_W),
 
     // status signals (dpath->ctrl)
-
-    .inst_D                 (inst_D),
     .br_cond_eq_X           (br_cond_eq_X),
-
+    .br_cond_lt_X           (br_cond_lt_X),
+    .br_cond_ltu_X          (br_cond_ltu_X),
+    .inst_D                 (inst_D),
     .commit_inst            (commit_inst)
   );
 
@@ -290,6 +318,9 @@ module lab2_proc_ProcBaseVRTL
   // Datapath
   //----------------------------------------------------------------------
 
+  logic [31:0] op2;
+  logic [31:0] imm_gen;
+
   lab2_proc_ProcBaseDpathVRTL
   #(
     .p_num_cores             (p_num_cores)
@@ -310,6 +341,7 @@ module lab2_proc_ProcBaseVRTL
     // Data Memory Port
 
     .dmemreq_msg_addr        (dmemreq_msg_addr),
+    .dmemreq_msg_data        (dmemreq_msg_data),
     .dmemresp_msg_data       (dmemresp_msg.data),
 
     // mngr communication ports
@@ -327,12 +359,23 @@ module lab2_proc_ProcBaseVRTL
     .pc_sel_F                (pc_sel_F),
 
     .reg_en_D                (reg_en_D),
+    .op1_sel_D               (op1_sel_D),
     .op2_sel_D               (op2_sel_D),
     .csrr_sel_D              (csrr_sel_D),
     .imm_type_D              (imm_type_D),
+    .imul_req_val_D          (imul_req_val_D),
+    .imul_req_rdy_D          (imul_req_rdy_D),
+    .imul_req_msg            (imul_req_msg), // for debug
 
+    .ex_result_sel_X         (ex_result_sel_X),
     .reg_en_X                (reg_en_X),
-    .alu_fn_X                (alu_fn_X),
+    .imul_resp_val_X         (imul_resp_val_X),
+    .imul_resp_rdy_X         (imul_resp_rdy_X),
+    .ex_result_X_out         (ex_result_X_out), // for debug
+    .alu_fn_X                (alu_fn_X), 
+    .alu_reslt               (alu_reslt), // For debug
+    .op1_X_out               (op1_X_out),
+    .op2_X_out               (op2_X_out),
 
     .reg_en_M                (reg_en_M),
     .wb_result_sel_M         (wb_result_sel_M),
@@ -346,6 +389,10 @@ module lab2_proc_ProcBaseVRTL
 
     .inst_D                  (inst_D),
     .br_cond_eq_X            (br_cond_eq_X),
+    .br_cond_lt_X            (br_cond_lt_X),
+    .br_cond_ltu_X           (br_cond_ltu_X),
+    .op2                     (op2),
+    .imm_gen                 (imm_gen),
 
     // stats_en
 
@@ -377,6 +424,9 @@ module lab2_proc_ProcBaseVRTL
       vc_trace.append_str( trace_str, str );
     end
 
+    $sformat( str, "%x", dpath.pc_sel_F );
+    vc_trace.append_str( trace_str,  " pc_sel_F: " );
+    vc_trace.append_str( trace_str,  str );
     vc_trace.append_str( trace_str, "|" );
 
     if ( !ctrl.val_D )
@@ -390,6 +440,13 @@ module lab2_proc_ProcBaseVRTL
     end else
       vc_trace.append_str( trace_str, { 3896'b0, rv2isa.disasm( ctrl.inst_D ) } );
 
+    // $sformat( str, "%x", dpath.imm_type_D );
+    // vc_trace.append_str( trace_str,  " imm_type: " );
+    // vc_trace.append_str( trace_str,  str );
+    $sformat( str, " %x", dpath.imm_gen );
+    vc_trace.append_str( trace_str,  " imm: " );
+    vc_trace.append_str( trace_str,  str );
+
     vc_trace.append_str( trace_str, "|" );
 
     if ( !ctrl.val_X )
@@ -399,6 +456,43 @@ module lab2_proc_ProcBaseVRTL
       vc_trace.append_chars( trace_str, " ", 4-1 );
     end else
       vc_trace.append_str( trace_str, { 4064'b0, rv2isa.disasm_tiny( ctrl.inst_X ) } );
+    
+    // $sformat( str, " %x", dpath.op1_X_out );
+    // vc_trace.append_str( trace_str,  " op1_X: " );
+    // vc_trace.append_str( trace_str,  str );
+    
+    
+    // $sformat( str, " %d", ctrl.br_type_X_out );
+    // vc_trace.append_str( trace_str,  " br_type_X_out: " );
+    // vc_trace.append_str( trace_str,  str );
+
+    // $sformat( str, " %d", ctrl.pc_redirect_X );
+    // vc_trace.append_str( trace_str,  " pc_redirect_X: " );
+    // vc_trace.append_str( trace_str,  str );
+
+    // $sformat( str, " %d", ctrl.pc_sel_X );
+    // vc_trace.append_str( trace_str,  " pc_sel_X: " );
+    // vc_trace.append_str( trace_str,  str );
+
+    // $sformat( str, "%x", dpath.ex_result_X_out );
+    // vc_trace.append_str( trace_str,  " ex_result_X_out: " );
+    // vc_trace.append_str( trace_str,  str );
+
+    // $sformat( str, " %x", dpath.ex_result_sel_X );
+    // vc_trace.append_str( trace_str,  " ex_result_sel_X: " );
+    // vc_trace.append_str( trace_str,  str );
+
+    // $sformat( str, " %x", dpath.imul_resp_val_X );
+    // vc_trace.append_str( trace_str,  " imul_resp_val_X: " );
+    // vc_trace.append_str( trace_str,  str );
+
+    // $sformat( str, " %x", dpath.imul_resp_rdy_X );
+    // vc_trace.append_str( trace_str,  " imul_resp_rdy_X: " );
+    // vc_trace.append_str( trace_str,  str );
+
+    // $sformat( str, " %x", dpath.dmemreq_msg_data );
+    // vc_trace.append_str( trace_str,  " dmemreq_data: " );
+    // vc_trace.append_str( trace_str,  str );
 
     vc_trace.append_str( trace_str, "|" );
 

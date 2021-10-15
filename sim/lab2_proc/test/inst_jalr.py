@@ -55,3 +55,30 @@ def gen_basic_test():
 # ''' LAB TASK ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 # Define additional directed and random test cases.
 # '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+def gen_one_jump_test():
+  return [
+    gen_jalr_simple_test(),
+    gen_jalr_simple_test(),
+    gen_jalr_simple_test(),
+    gen_jalr_simple_test(),
+    gen_jalr_simple_test(),
+    gen_jalr_simple_test(),
+  ]
+
+def gen_seq_test():
+  return [
+    gen_jalr_value_test("jalr", 0),
+    gen_jalr_value_test("jalr", 24),
+    gen_jalr_value_test("jalr", 48),
+    gen_jalr_value_test("jalr", 72),
+    gen_jalr_value_test("jalr", 80),
+  ]
+
+
+def gen_random_test():
+  asm_code = []
+  for i in xrange(9):
+    imm = random.randint(0, 1)
+    asm_code.append( gen_jalr_value_test("jalr", imm) )
+  return asm_code

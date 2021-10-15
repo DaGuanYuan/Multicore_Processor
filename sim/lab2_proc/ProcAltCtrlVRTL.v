@@ -1,15 +1,15 @@
 //=========================================================================
-// 5-Stage Stalling Pipelined Processor Control
+// 5-Stage Bypassing Pipelined Processor Control
 //=========================================================================
 
-`ifndef LAB2_PROC_PIPELINED_PROC_BASE_CTRL_V
-`define LAB2_PROC_PIPELINED_PROC_BASE_CTRL_V
+`ifndef LAB2_PROC_PIPELINED_PROC_ALT_CTRL_V
+`define LAB2_PROC_PIPELINED_PROC_ALT_CTRL_V
 
 `include "vc/trace.v"
 
 `include "lab2_proc/TinyRV2InstVRTL.v"
 
-module lab2_proc_ProcBaseCtrlVRTL
+module lab2_proc_ProcAltCtrlVRTL
 (
   input  logic        clk,
   input  logic        reset,
@@ -54,6 +54,8 @@ module lab2_proc_ProcBaseCtrlVRTL
   output logic [2:0]  imm_type_D,
   output logic        imul_req_val_D,
   input  logic        imul_req_rdy_D,
+  output logic [1:0]  op1_byp_sel_D,
+  output logic [1:0]  op2_byp_sel_D,
   input  logic        imul_resp_val_X,
   output logic        imul_resp_rdy_X,
 
@@ -491,56 +493,63 @@ module lab2_proc_ProcBaseCtrlVRTL
   
   // ostall if write address in X matches rs1 in D
 
-  logic  ostall_waddr_X_rs1_D;
-  assign ostall_waddr_X_rs1_D
-    = rs1_en_D && val_X && rf_wen_pending_X
+  logic  bypass_waddr_X_rs1_D;
+  assign bypass_waddr_X_rs1_D
+    = val_D && rs1_en_D && val_X && rf_wen_pending_X
       && ( inst_rs1_D == rf_waddr_X ) && ( rf_waddr_X != 5'd0 );
 
   // ostall if write address in M matches rs1 in D
 
-  logic  ostall_waddr_M_rs1_D;
-  assign ostall_waddr_M_rs1_D
-    = rs1_en_D && val_M && rf_wen_pending_M
-      && ( inst_rs1_D == rf_waddr_M ) && ( rf_waddr_M != 5'd0 );
+  logic  bypass_waddr_M_rs1_D;
+  assign bypass_waddr_M_rs1_D
+    = val_D && rs1_en_D && val_M && rf_wen_pending_M
+      && ( inst_rs1_D == rf_waddr_M ) && ( rf_waddr_M != 5'd0 )
+      && (dmemreq_type_X != ld);
 
   // ostall if write address in W matches rs1 in D
 
-  logic  ostall_waddr_W_rs1_D;
-  assign ostall_waddr_W_rs1_D
-    = rs1_en_D && val_W && rf_wen_pending_W
+  logic  bypass_waddr_W_rs1_D;
+  assign bypass_waddr_W_rs1_D
+    = val_D && rs1_en_D && val_W && rf_wen_pending_W
       && ( inst_rs1_D == rf_waddr_W ) && ( rf_waddr_W != 5'd0 );
 
   // ostall if write address in X matches rs2 in D
 
-  logic  ostall_waddr_X_rs2_D;
-  assign ostall_waddr_X_rs2_D
-    = rs2_en_D && val_X && rf_wen_pending_X
+  logic  bypass_waddr_X_rs2_D;
+  assign bypass_waddr_X_rs2_D
+    = val_D && rs2_en_D && val_X && rf_wen_pending_X
       && ( inst_rs2_D == rf_waddr_X ) && ( rf_waddr_X != 5'd0 );
 
-  // ostall if write address in M matches rs2 in D
+  // bypass if write address in M matches rs2 in D
 
-  logic  ostall_waddr_M_rs2_D;
-  assign ostall_waddr_M_rs2_D
-    = rs2_en_D && val_M && rf_wen_pending_M
+  logic  bypass_waddr_M_rs2_D;
+  assign bypass_waddr_M_rs2_D
+    = val_D && rs2_en_D && val_M && rf_wen_pending_M
       && ( inst_rs2_D == rf_waddr_M ) && ( rf_waddr_M != 5'd0 );
 
   // ostall if write address in W matches rs2 in D
 
-  logic  ostall_waddr_W_rs2_D;
-  assign ostall_waddr_W_rs2_D
-    = rs2_en_D && val_W && rf_wen_pending_W
+  logic  bypass_waddr_W_rs2_D;
+  assign bypass_waddr_W_rs2_D
+    = val_D && rs2_en_D && val_W && rf_wen_pending_W
       && ( inst_rs2_D == rf_waddr_W ) && ( rf_waddr_W != 5'd0 );
 
-  // Put together ostall signal due to hazards
-
-  logic  ostall_hazard_D;
-  assign ostall_hazard_D =
-      ostall_waddr_X_rs1_D || ostall_waddr_M_rs1_D || ostall_waddr_W_rs1_D ||
-      ostall_waddr_X_rs2_D || ostall_waddr_M_rs2_D || ostall_waddr_W_rs2_D; 
+  // need to stall for one cycle for load_use case
+  logic ostall_load_use_X_rs1_D;
+  assign ostall_load_use_X_rs1_D 
+          = val_D && rs1_en_D && val_X && rf_wen_pending_X
+            && (inst_rs1_D == rf_waddr_X) && (rf_waddr_X != 5'd0)
+            && (dmemreq_type_X == ld);
+  
+  logic ostall_load_use_X_rs2_D;
+  assign ostall_load_use_X_rs2_D 
+          = val_D && rs2_en_D && val_X && rf_wen_pending_X
+            && (inst_rs2_D == rf_waddr_X) && (rf_waddr_X != 5'd0)
+            && (dmemreq_type_X == ld);
 
   // Final ostall signal
 
-  assign ostall_D = val_D && ( ostall_mngr2proc_D || ostall_hazard_D || ostall_imul_rdy_D);
+  assign ostall_D = val_D && ( ostall_mngr2proc_D || ostall_imul_rdy_D || ostall_load_use_X_rs1_D || ostall_load_use_X_rs2_D);
 
   // osquash due to jump instruction in D stage
 
@@ -555,6 +564,29 @@ module lab2_proc_ProcBaseCtrlVRTL
 
   logic  next_val_D;
   assign next_val_D = val_D && !stall_D && !squash_D;
+
+  // Bypass select signal
+  always_comb begin
+    if (bypass_waddr_X_rs1_D) begin
+      op1_byp_sel_D = 2'd1;
+    end else if (bypass_waddr_M_rs1_D) begin
+      op1_byp_sel_D = 2'd2;
+    end else if (bypass_waddr_W_rs1_D) begin
+      op1_byp_sel_D = 2'd3;
+    end else begin
+      op1_byp_sel_D = 2'd0;
+    end
+
+    if (bypass_waddr_X_rs2_D) begin
+      op2_byp_sel_D = 2'd1;
+    end else if (bypass_waddr_M_rs2_D) begin
+      op2_byp_sel_D = 2'd2;
+    end else if (bypass_waddr_W_rs2_D) begin
+      op2_byp_sel_D = 2'd3;
+    end else begin
+      op2_byp_sel_D = 2'd0;
+    end
+  end
 
   //----------------------------------------------------------------------
   // X stage

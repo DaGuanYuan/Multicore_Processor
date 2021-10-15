@@ -2,8 +2,8 @@
 // 5-Stage Stalling Pipelined Processor Datapath
 //=========================================================================
 
-`ifndef LAB2_PROC_PIPELINED_PROC_BASE_DPATH_V
-`define LAB2_PROC_PIPELINED_PROC_BASE_DPATH_V
+`ifndef LAB2_PROC_PIPELINED_PROC_ALT_DPATH_V
+`define LAB2_PROC_PIPELINED_PROC_ALT_DPATH_V
 
 `include "vc/arithmetic.v"
 `include "vc/mem-msgs.v"
@@ -15,7 +15,7 @@
 `include "lab2_proc/ProcDpathComponentsVRTL.v"
 `include "lab1_imul/IntMulAltVRTL.v"
 
-module lab2_proc_ProcBaseDpathVRTL
+module lab2_proc_ProcAltDpathVRTL
 #(
   parameter p_num_cores = 1
 )
@@ -55,16 +55,16 @@ module lab2_proc_ProcBaseDpathVRTL
   input  logic [1:0]  op2_sel_D,
   input  logic [1:0]  csrr_sel_D,
   input  logic [2:0]  imm_type_D,
-  output logic [63:0] imul_req_msg,  //for debug
   input  logic        imul_req_val_D,
   output logic        imul_req_rdy_D,
+  input  logic [1:0]  op1_byp_sel_D,
+  input  logic [1:0]  op2_byp_sel_D,
   output logic        imul_resp_val_X,
   input  logic        imul_resp_rdy_X,
 
   input  logic        reg_en_X,
   input  logic [3:0]  alu_fn_X,
   input  logic [1:0]  ex_result_sel_X,
-  output logic [31:0] ex_result_X_out, // for debug
 
   input  logic        reg_en_M,
   input  logic        wb_result_sel_M,
@@ -80,18 +80,10 @@ module lab2_proc_ProcBaseDpathVRTL
   output logic        br_cond_eq_X,
   output logic        br_cond_lt_X,
   output logic        br_cond_ltu_X,
-  output logic [31:0] imm_gen,  // for debug
-  output logic [31:0] op1_X_out, // for debug
-  output logic [31:0] op2_X_out, // for debug
 
   // stats output
 
-  output logic        stats_en,
-
-  // For debug
-  output logic [31:0] op2,
-  output logic [31:0] alu_reslt
-
+  output logic        stats_en
 );
 
   localparam c_reset_vector = 32'h200;
@@ -184,8 +176,6 @@ module lab2_proc_ProcBaseDpathVRTL
     .imm      (imm_D)
   );
 
-  assign imm_gen = imm_D;
-
   logic [31:0] rf_rdata0_D;
   logic [31:0] rf_rdata1_D;
 
@@ -222,12 +212,34 @@ module lab2_proc_ProcBaseDpathVRTL
    .out  (csrr_data_D)
   );
 
+  logic [31:0] op1_bprf;
+  vc_Mux4 #(32) op1_byp_mux_D
+  (
+    .in0(rf_rdata0_D),
+    .in1(bypass_from_X),
+    .in2(bypass_from_M),
+    .in3(bypass_from_W),
+    .sel(op1_byp_sel_D),
+    .out(op1_bprf)
+  );
+
   vc_Mux2 #(32) op1_sel_mux_D
   (
-    .in0  (rf_rdata0_D),
+    .in0  (op1_bprf),
     .in1  (pc_D),
     .sel  (op1_sel_D),
     .out  (op1_D)
+  );
+
+  logic [31:0] op2_bprf;
+  vc_Mux4 #(32) op2_byp_mux_D
+  (
+    .in0(rf_rdata1_D),
+    .in1(bypass_from_X),
+    .in2(bypass_from_M),
+    .in3(bypass_from_W),
+    .sel(op2_byp_sel_D),
+    .out(op2_bprf)
   );
 
   // op2 select mux
@@ -235,14 +247,12 @@ module lab2_proc_ProcBaseDpathVRTL
   // csrr sel mux. Basically we are using two muxes here for pedagogy.
   vc_Mux3 #(32) op2_sel_mux_D
   (
-    .in0  (rf_rdata1_D),
+    .in0  (op2_bprf),
     .in1  (imm_D),
     .in2  (csrr_data_D),
     .sel  (op2_sel_D),
     .out  (op2_D)
   );
-
-  assign op2 = op2_D; // For debugging
 
   vc_Adder #(32) pc_plus_imm_D
   (
@@ -261,9 +271,6 @@ module lab2_proc_ProcBaseDpathVRTL
   logic [31:0] op2_X;
   logic [31:0] pc_X;
   logic [31:0] pc_plus4_X;
-
-  assign op1_X_out = op1_X;
-  assign op2_X_out = op2_X;
 
   vc_Incrementer #(32, 4) pc_incr_X
   (
@@ -333,7 +340,6 @@ module lab2_proc_ProcBaseDpathVRTL
   logic [63:0] imul_req_msg_D;
   assign imul_req_msg_D[63:32]= op1_D;
   assign imul_req_msg_D[31:0] = op2_D;
-  assign imul_req_msg = imul_req_msg_D;
   logic [31:0] imul_resp_msg;    
 
   lab1_imul_IntMulAltVRTL imul
@@ -358,7 +364,9 @@ module lab2_proc_ProcBaseDpathVRTL
     .out    (ex_result_X)
   );
 
-  assign ex_result_X_out  = ex_result_X; // For debug
+  logic [31:0] bypass_from_X;
+
+  assign bypass_from_X    = ex_result_X;
 
   assign dmemreq_msg_addr = alu_result_X;
 
@@ -392,6 +400,9 @@ module lab2_proc_ProcBaseDpathVRTL
     .out    (wb_result_M)
   );
 
+  logic [31:0] bypass_from_M;
+  assign bypass_from_M = wb_result_M;
+
   //--------------------------------------------------------------------
   // W stage
   //--------------------------------------------------------------------
@@ -410,6 +421,9 @@ module lab2_proc_ProcBaseDpathVRTL
   assign proc2mngr_data = wb_result_W;
 
   assign rf_wdata_W = wb_result_W;
+
+  logic [31:0] bypass_from_W;
+  assign bypass_from_W = wb_result_W;
 
   // stats output
   // note the stats en is full 32-bit here but the outside port is one
