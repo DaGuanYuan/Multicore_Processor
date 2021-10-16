@@ -17,18 +17,7 @@ def gen_basic_test():
     csrr x2, mngr2proc < 0xdeadbeef
     nop
     nop
-    nop
-    nop
-    nop
-    nop
-    nop
-    nop
     sw   x2, 0(x1)
-    nop
-    nop
-    nop
-    nop
-    nop
     nop
     nop
     nop

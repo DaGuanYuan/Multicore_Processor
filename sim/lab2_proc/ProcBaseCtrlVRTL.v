@@ -28,6 +28,7 @@ module lab2_proc_ProcBaseCtrlVRTL
 
   output logic        dmemreq_val,
   input  logic        dmemreq_rdy,
+  output logic  [1:0] dmemreq_type,
 
   input  logic        dmemresp_val,
   output logic        dmemresp_rdy,
@@ -390,19 +391,20 @@ module lab2_proc_ProcBaseCtrlVRTL
       `RV2ISA_INST_SRL     :cs( y, br_na,  imm_x, y, am_rf,  bm_rf,  y, alu_srl, xm_alu ,nr, wm_a, y,  n,   n    );
       `RV2ISA_INST_SLL     :cs( y, br_na,  imm_x, y, am_rf,  bm_rf,  y, alu_sll, xm_alu ,nr, wm_a, y,  n,   n    );
 
-      `RV2ISA_INST_ADDI    :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, y, alu_add, xm_alu ,nr, wm_a, y,  n,   n    );
-      `RV2ISA_INST_ANDI    :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, y, alu_and, xm_alu ,nr, wm_a, y,  n,   n    );
-      `RV2ISA_INST_ORI     :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, y, alu_or,  xm_alu ,nr, wm_a, y,  n,   n    );
-      `RV2ISA_INST_XORI    :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, y, alu_xor, xm_alu ,nr, wm_a, y,  n,   n    );
-      `RV2ISA_INST_SLTI    :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, y, alu_slt, xm_alu ,nr, wm_a, y,  n,   n    );
-      `RV2ISA_INST_SLTIU   :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, y, alu_sltu,xm_alu ,nr, wm_a, y,  n,   n    );
-      `RV2ISA_INST_SRAI    :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, y, alu_sra, xm_alu ,nr, wm_a, y,  n,   n    );
-      `RV2ISA_INST_SRLI    :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, y, alu_srl, xm_alu ,nr, wm_a, y,  n,   n    );
-      `RV2ISA_INST_SLLI    :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, y, alu_sll, xm_alu ,nr, wm_a, y,  n,   n    );
-      `RV2ISA_INST_LUI     :cs( y, br_na,  imm_u, y, am_rf,  bm_imm, y, alu_lui, xm_alu ,nr, wm_a, y,  n,   n    );
-      `RV2ISA_INST_AUIPC   :cs( y, br_na,  imm_u, y, am_pc,  bm_imm, y, alu_auipc,xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_ADDI    :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, n, alu_add, xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_ANDI    :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, n, alu_and, xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_ORI     :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, n, alu_or,  xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_XORI    :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, n, alu_xor, xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_SLTI    :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, n, alu_slt, xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_SLTIU   :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, n, alu_sltu,xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_SRAI    :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, n, alu_sra, xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_SRLI    :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, n, alu_srl, xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_SLLI    :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, n, alu_sll, xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_LUI     :cs( y, br_na,  imm_u, y, am_rf,  bm_imm, n, alu_lui, xm_alu ,nr, wm_a, y,  n,   n    );
+      `RV2ISA_INST_AUIPC   :cs( y, br_na,  imm_u, y, am_pc,  bm_imm, n, alu_auipc,xm_alu,nr, wm_a, y,  n,   n    );
 
       `RV2ISA_INST_LW      :cs( y, br_na,  imm_i, y, am_rf,  bm_imm, n, alu_add, xm_alu ,ld, wm_m, y,  n,   n    );
+      `RV2ISA_INST_SW      :cs( y, br_na,  imm_s, y, am_rf,  bm_imm, y, alu_add, xm_x   ,st, wm_m, n,  n,   n    );
       `RV2ISA_INST_BNE     :cs( y, br_bne, imm_b, y, am_rf,  bm_rf,  y, alu_x,   xm_x   ,nr, wm_a, n,  n,   n    );
       `RV2ISA_INST_CSRR    :cs( y, br_na,  imm_i, n, am_rf,  bm_csr, n, alu_cp1, xm_alu ,nr, wm_a, y,  y,   n    );
       `RV2ISA_INST_CSRW    :cs( y, br_na,  imm_i, y, am_rf,  bm_rf,  n, alu_cp0, xm_alu ,nr, wm_a, n,  n,   y    );
@@ -538,6 +540,9 @@ module lab2_proc_ProcBaseCtrlVRTL
   logic        stats_en_wen_X;
   logic [2:0]  br_type_X;
 
+  // Signal for memory interface
+  assign dmemreq_type = dmemreq_type_X;
+
   // Pipeline registers
 
   always_ff @( posedge clk )
@@ -574,9 +579,9 @@ module lab2_proc_ProcBaseCtrlVRTL
 
   assign imul_resp_rdy_X  = val_X && !stall_X;
 
+  // ostall due to imul not ready.
   logic  ostall_imul_X;
-  assign ostall_imul_X = val_X && !imul_resp_val_X && !imul_req_rdy_D;
-  // !imul_req_rdy_D to make sure that imul is calculating
+  assign ostall_imul_X = !imul_resp_val_X && !imul_req_rdy_D;   // !imul_req_rdy_D to make sure that imul is calculating
 
   // ostall due to dmemreq not ready.
   

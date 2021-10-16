@@ -87,7 +87,9 @@ module lab2_proc_ProcBaseVRTL
 
   // dmem req before pack
 
+  logic [31:0] dmemreq_msg_data;
   logic [31:0] dmemreq_msg_addr;
+  logic  [1:0] dmemreq_type;
 
   // dmemreq after pack before bypass queue
 
@@ -155,11 +157,17 @@ module lab2_proc_ProcBaseVRTL
   assign imemreq_enq_msg.len    = 2'd0;
   assign imemreq_enq_msg.data   = 32'bx;
 
-  assign dmemreq_enq_msg.type_  = `VC_MEM_REQ_MSG_TYPE_READ;
+  always_comb begin
+    case ( dmemreq_type )
+      2'd1:      dmemreq_enq_msg.type_  = `VC_MEM_REQ_MSG_TYPE_READ;
+      2'd2:      dmemreq_enq_msg.type_  = `VC_MEM_REQ_MSG_TYPE_WRITE;
+      default:   dmemreq_enq_msg.type_  = `VC_MEM_REQ_MSG_TYPE_READ;
+    endcase
+  end
   assign dmemreq_enq_msg.opaque = 8'b0;
   assign dmemreq_enq_msg.addr   = dmemreq_msg_addr;
   assign dmemreq_enq_msg.len    = 2'd0;
-  assign dmemreq_enq_msg.data   = 32'b0;
+  assign dmemreq_enq_msg.data   = dmemreq_msg_data;
 
   //----------------------------------------------------------------------
   // Imem Drop Unit
@@ -207,9 +215,11 @@ module lab2_proc_ProcBaseVRTL
 
     .dmemreq_val            (dmemreq_enq_val),
     .dmemreq_rdy            (dmemreq_enq_rdy),
+    .dmemreq_type           (dmemreq_type),
+
     .dmemresp_val           (dmemresp_val),
     .dmemresp_rdy           (dmemresp_rdy),
-
+    
     // mngr communication ports
 
     .mngr2proc_val          (mngr2proc_val),
@@ -327,6 +337,7 @@ module lab2_proc_ProcBaseVRTL
 
     // Data Memory Port
 
+    .dmemreq_msg_data        (dmemreq_msg_data),
     .dmemreq_msg_addr        (dmemreq_msg_addr),
     .dmemresp_msg_data       (dmemresp_msg.data),
 
