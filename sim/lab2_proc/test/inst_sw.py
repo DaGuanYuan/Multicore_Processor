@@ -59,11 +59,11 @@ def gen_dest_dep_test():
 
 def gen_base_dep_test():
   return [
-    # gen_st_base_dep_test( 5, "sw", 0x00002000, 0x00010203),
-    # gen_st_base_dep_test( 4, "sw", 0x00002004, 0x04050607),
-    # gen_st_base_dep_test( 3, "sw", 0x00002008, 0x08090a0b),
-    # gen_st_base_dep_test( 2, "sw", 0x0000200c, 0x0c0d0e0f),
-    # gen_st_base_dep_test( 1, "sw", 0x00002010, 0x10111213),
+    gen_st_base_dep_test( 5, "sw", 0x00002000, 0x00010203),
+    gen_st_base_dep_test( 4, "sw", 0x00002004, 0x04050607),
+    gen_st_base_dep_test( 3, "sw", 0x00002008, 0x08090a0b),
+    gen_st_base_dep_test( 2, "sw", 0x0000200c, 0x0c0d0e0f),
+    gen_st_base_dep_test( 1, "sw", 0x00002010, 0x10111213),
     gen_st_base_dep_test( 0, "sw", 0x00002014, 0x14151617),
   ]
 

@@ -79,6 +79,6 @@ def gen_seq_test():
 def gen_random_test():
   asm_code = []
   for i in xrange(9):
-    imm = random.randint(0, 96) # Define the number of lines to jump
+    imm = random.randint(0, 96) # Define the number of bytes to jump
     asm_code.append( gen_jalr_value_test("jalr", imm) )
   return asm_code
