@@ -37,7 +37,14 @@ def test_lw_rand_delays( dump_vcd ):
 import inst_sw
 
 @pytest.mark.parametrize( "name,test", [
-  asm_test( inst_sw.gen_basic_test     ),
+  asm_test( inst_sw.gen_basic_test              ),
+  asm_test( inst_sw.gen_dest_dep_test           ),
+  asm_test( inst_sw.gen_base_dep_test           ),
+  asm_test( inst_sw.gen_src_dep_test            ),
+  asm_test( inst_sw.gen_baseAndSrc_dep_test     ),
+  asm_test( inst_sw.gen_st_baseAndSrc_dest_test ),
+  asm_test( inst_sw.gen_value_test              ),
+  asm_test( inst_sw.gen_random_test             ),
 
   # ''' LAB TASK '''''''''''''''''''''''''''''''''''''''''''''''''''''''''
   # Add more rows to the test case table to test more complicated

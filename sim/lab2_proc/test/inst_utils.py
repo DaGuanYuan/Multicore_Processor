@@ -574,6 +574,182 @@ def gen_ld_value_test( inst, offset, base, result ):
 
 # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
+#-------------------------------------------------------------------------
+# gen_st_baseSrc_template (self_defined)
+#-------------------------------------------------------------------------
+# Template for store instructions. We first write the base and src 
+# registers before executing the instruction under test. We parameterized
+# number of nops after writing the base register and the src register as
+# well as the instruction under test to enable using this template for
+# testing various bypass paths. We also parameterize the register 
+# specifiers to enable using this template to test situations where
+# the base register is equal to the destination register.
+# Since we have test bypass paths/stalling for lw, we don't need 
+# to add nops between lw and csrw.
+
+def gen_st_baseSrc_template(
+  num_nops_base, num_nops_src, num_nops_dest,
+  reg_base, reg_src,
+  inst, offset, base, src, result
+):
+  return """
+
+    # Move base value into register
+    csrr {reg_base}, mngr2proc < {base}
+    {nops_base}
+
+    # Move src value into register
+    csrr {reg_src}, mngr2proc < {src}
+    {nops_src}
+
+    # Instruction under test
+    {inst} {reg_src}, {offset}({reg_base})
+    {nops_dest}
+
+    # Check the result
+    lw x3, {offset}({reg_base})
+    csrw proc2mngr, x3 > {result}
+
+  """.format(
+    nops_base = gen_nops(num_nops_base),
+    nops_src  = gen_nops(num_nops_src),
+    nops_dest = gen_nops(num_nops_dest),
+    **locals()
+  )
+
+#-------------------------------------------------------------------------
+# gen_st_srcBase_template (self_defined)
+#-------------------------------------------------------------------------
+# Similar to the above template, except that we reverse the order in
+# which we write the base and src register
+
+def gen_st_srcBase_template(
+  num_nops_base, num_nops_src, num_nops_dest,
+  reg_base, reg_src,
+  inst, offset, base, src, result
+):
+  return """
+
+    # Move src value into register
+    csrr {reg_src}, mngr2proc < {src}
+    {nops_src}
+
+    # Move base value into register
+    csrr {reg_base}, mngr2proc < {base}
+    {nops_base}
+
+    # Instruction under test
+    {inst} {reg_src}, {offset}({reg_base})
+    {nops_dest}
+
+    # Check the result
+    lw x3, {offset}({reg_base})
+    csrw proc2mngr, x3 > {result}
+
+  """.format(
+    nops_base = gen_nops(num_nops_base),
+    nops_src  = gen_nops(num_nops_src),
+    nops_dest = gen_nops(num_nops_dest),
+    **locals()
+  )
+
+#-------------------------------------------------------------------------
+# gen_st_dest_dep_test
+#-------------------------------------------------------------------------
+# Test the destination bypass path by varying how many nops are
+# inserted between the instruction under test and reading the destination
+# register. Note that the vaue of src is the result that we want.
+# So we set the result argument to src
+
+def gen_st_dest_dep_test( num_nops, inst, base, src ):
+  return gen_st_baseSrc_template( 0, 8, num_nops, "x1", "x2",
+                                inst, 0, base, src, src )
+
+#-------------------------------------------------------------------------
+# gen_st_base_dep_test
+#-------------------------------------------------------------------------
+# Test the base bypass paths by varying how many nops are inserted
+# between writing the base register and reading this register in the
+# instruction under test.
+
+def gen_st_base_dep_test( num_nops, inst, base, src ):
+  return gen_st_baseSrc_template( 8-num_nops, num_nops, 0, "x1", "x2",
+                                inst, 0, base, src, src )
+
+#-------------------------------------------------------------------------
+# gen_st_src_dep_test
+#-------------------------------------------------------------------------
+# Test the src bypass paths by varying how many nops are inserted
+# between writing the src register and reading this register in the
+# instruction under test.
+
+def gen_st_src_dep_test( num_nops, inst, base, src):
+  return gen_st_srcBase_template( num_nops, 8-num_nops, 0, "x1", "x2",
+                                inst, 0, base, src, src )
+
+#-------------------------------------------------------------------------
+# gen_st_baseAndSrc_dep_test
+#-------------------------------------------------------------------------
+# Test both bypass paths by varying how many nops are inserted
+# between writing the base and src register and reading both register in the
+# instruction under test.
+
+def gen_st_baseAndSrc_dep_test( num_nops, inst, base, src ):
+  return gen_st_baseSrc_template( 0, num_nops, 0, "x1", "x2",
+                                inst, 0, base, src, src )
+
+#-------------------------------------------------------------------------
+# gen_st_base_eq_dest_test
+#-------------------------------------------------------------------------
+# Test situation where the base register specifier is the same as the
+# destination register specifier.
+
+def gen_st_base_eq_dest_test( inst, base, src ):
+  return gen_st_baseSrc_template( 0, 0, 0, "x3", "x2",
+                                inst, 0, base, src, src )
+
+#-------------------------------------------------------------------------
+# gen_st_src_eq_dest_test
+#-------------------------------------------------------------------------
+# Test situation where the src1 register specifier is the same as the
+# destination register specifier.
+
+def gen_st_src_eq_dest_test( inst, base, src ):
+  return gen_st_baseSrc_template( 0, 0, 0, "x1", "x3",
+                                inst, 0, base, src, src )
+
+#-------------------------------------------------------------------------
+# gen_st_base_eq_src_test
+#-------------------------------------------------------------------------
+# Test situation where the base register specifier is the same as the
+# src register specifier.
+
+def gen_st_base_eq_src_test( inst, base, src ):
+  return gen_st_baseSrc_template( 0, 0, 0, "x1", "x1",
+                                inst, 0, base, src, src )
+
+#-------------------------------------------------------------------------
+# gen_st_baseAndSrc_eq_dest_test
+#-------------------------------------------------------------------------
+# Test situation where all three register specifiers are the same.
+
+def gen_st_baseAndSrc_eq_dest_test( inst, base, src ):
+  return gen_st_baseSrc_template( 0, 0, 0, "x3", "x3",
+                                inst, 0, base, src, src )
+
+#-------------------------------------------------------------------------
+# gen_st_value_test
+#-------------------------------------------------------------------------
+# Test the actual operation of a store word instruction under
+# test. We assume that bypassing has already been tested.
+
+def gen_st_value_test( inst, offset, base, src ):
+  return gen_st_baseSrc_template( 0, 0, 0, "x1", "x2",
+                                inst, offset, base, src, src )
+
+# ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+
 #=========================================================================
 # TestHarness
 #=========================================================================

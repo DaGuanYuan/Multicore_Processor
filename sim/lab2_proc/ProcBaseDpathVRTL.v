@@ -117,11 +117,12 @@ module lab2_proc_ProcBaseDpathVRTL
     .out  (pc_plus4_F)
   );
 
-  vc_Mux3 #(32) pc_sel_mux_F
+  vc_Mux4 #(32) pc_sel_mux_F
   (
     .in0  (pc_plus4_F),
     .in1  (br_target_X),
     .in2  (jal_target_D),
+    .in3  (jal_target_D),
     .sel  (pc_sel_F),
     .out  (pc_next_F)
   );
@@ -264,6 +265,8 @@ module lab2_proc_ProcBaseDpathVRTL
   // X stage
   //--------------------------------------------------------------------
 
+  logic [31:0] pc_X;
+  logic [31:0] pc_incr_4_X;
   logic [31:0] op1_X;
   logic [31:0] op2_X;
 
@@ -303,6 +306,15 @@ module lab2_proc_ProcBaseDpathVRTL
     .q      (br_target_X)
   );
 
+  vc_EnResetReg #(32, 0) pc_reg_X
+  (
+    .clk    (clk),
+    .reset  (reset),
+    .en     (reg_en_X),
+    .d      (pc_D),
+    .q      (pc_X)
+  );
+
   logic [31:0] alu_result_X;
   logic [31:0] ex_result_X;
 
@@ -323,9 +335,11 @@ module lab2_proc_ProcBaseDpathVRTL
 
   // ex result select mux
   // This mux chooses among pc_incr_X, alu_result_X, imul_resp_msg_X
+  assign pc_incr_4_X = pc_X + 4;
+
   vc_Mux3 #(32) ex_result_sel_mux_X
   (
-    .in0  (),
+    .in0  (pc_incr_4_X),
     .in1  (alu_result_X),
     .in2  (imul_resp_msg_X),
     .sel  (ex_result_sel_X),
