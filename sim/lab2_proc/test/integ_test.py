@@ -9,6 +9,20 @@ from inst_utils import *
 
 def gen_integ_test_mz588():
   return """
+    .data
+
+    # src array
+    .word 0x00000001
+    .word 0x00000004
+    .word 0x00000005
+    .word 0x00000009
+
+    # dest array
+    .word 0x00000000
+    .word 0x00000000
+    .word 0x00000000
+    .word 0x00000000
+    
     csrr x1,  mngr2proc < 0x00002000  # load the address of the array into x1
     csrr x10, mngr2proc < 0x00002010 # load the address of the array into x1
     addi x2, x0, 0x00000004         # put the size of the array in x2
@@ -26,6 +40,7 @@ def gen_integ_test_mz588():
     add x11, x12, x10
 
     lw x5, 0(x4)
+    sw x5, 0(x4)
     andi x6, x5, 1
     auipc x7, 0
     addi x7, x7, 0x14
@@ -57,18 +72,4 @@ def gen_integ_test_mz588():
     addi x1, x1, 0xc
     lw  x2, 0(x1)
     csrw proc2mngr, x2 > 8
-
-    .data
-
-    # src array
-    .word 0x00000001
-    .word 0x00000004
-    .word 0x00000005
-    .word 0x00000009
-
-    # dest array
-    .word 0x00000000
-    .word 0x00000000
-    .word 0x00000000
-    .word 0x00000000
   """

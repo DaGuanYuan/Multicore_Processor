@@ -55,7 +55,6 @@ module lab2_proc_ProcBaseDpathVRTL
   input  logic [1:0]  op2_sel_D,
   input  logic [1:0]  csrr_sel_D,
   input  logic [2:0]  imm_type_D,
-  output logic [63:0] imul_req_msg,  //for debug
   input  logic        imul_req_val_D,
   output logic        imul_req_rdy_D,
   output logic        imul_resp_val_X,
@@ -64,7 +63,6 @@ module lab2_proc_ProcBaseDpathVRTL
   input  logic        reg_en_X,
   input  logic [3:0]  alu_fn_X,
   input  logic [1:0]  ex_result_sel_X,
-  output logic [31:0] ex_result_X_out, // for debug
 
   input  logic        reg_en_M,
   input  logic        wb_result_sel_M,
@@ -80,17 +78,10 @@ module lab2_proc_ProcBaseDpathVRTL
   output logic        br_cond_eq_X,
   output logic        br_cond_lt_X,
   output logic        br_cond_ltu_X,
-  output logic [31:0] imm_gen,  // for debug
-  output logic [31:0] op1_X_out, // for debug
-  output logic [31:0] op2_X_out, // for debug
 
   // stats output
 
-  output logic        stats_en,
-
-  // For debug
-  output logic [31:0] op2,
-  output logic [31:0] alu_reslt
+  output logic        stats_en
 
 );
 
@@ -184,8 +175,6 @@ module lab2_proc_ProcBaseDpathVRTL
     .imm      (imm_D)
   );
 
-  assign imm_gen = imm_D;
-
   logic [31:0] rf_rdata0_D;
   logic [31:0] rf_rdata1_D;
 
@@ -242,8 +231,6 @@ module lab2_proc_ProcBaseDpathVRTL
     .out  (op2_D)
   );
 
-  assign op2 = op2_D; // For debugging
-
   vc_Adder #(32) pc_plus_imm_D
   (
     .in0      (pc_D),
@@ -261,9 +248,6 @@ module lab2_proc_ProcBaseDpathVRTL
   logic [31:0] op2_X;
   logic [31:0] pc_X;
   logic [31:0] pc_plus4_X;
-
-  assign op1_X_out = op1_X;
-  assign op2_X_out = op2_X;
 
   vc_Incrementer #(32, 4) pc_incr_X
   (
@@ -333,7 +317,6 @@ module lab2_proc_ProcBaseDpathVRTL
   logic [63:0] imul_req_msg_D;
   assign imul_req_msg_D[63:32]= op1_D;
   assign imul_req_msg_D[31:0] = op2_D;
-  assign imul_req_msg = imul_req_msg_D;
   logic [31:0] imul_resp_msg;    
 
   lab1_imul_IntMulAltVRTL imul
@@ -357,8 +340,6 @@ module lab2_proc_ProcBaseDpathVRTL
     .sel    (ex_result_sel_X),
     .out    (ex_result_X)
   );
-
-  assign ex_result_X_out  = ex_result_X; // For debug
 
   assign dmemreq_msg_addr = alu_result_X;
 

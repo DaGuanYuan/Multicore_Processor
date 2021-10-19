@@ -131,13 +131,6 @@ module lab2_proc_ProcBaseVRTL
   logic [3:0]  alu_fn_X; 
   logic        imul_resp_val_X;
   logic        imul_resp_rdy_X;
-  logic [31:0] alu_reslt; // For debug
-  logic [31:0] ex_result_X_out; // for debug
-  logic [31:0] op1_X_out; //for debug
-  logic [31:0] op2_X_out; // for debug
-  logic [1:0]  pc_sel_X; // for debug
-  logic        pc_redirect_X; // for debug
-  logic [3:0]  br_type_X_out; // debug
 
   logic        reg_en_M;
   logic        wb_result_sel_M;
@@ -164,8 +157,6 @@ module lab2_proc_ProcBaseVRTL
   assign imemreq_enq_msg.len    = 2'd0;
   assign imemreq_enq_msg.data   = 32'bx;
 
-  // assign dmemreq_enq_msg.type_  = `VC_MEM_REQ_MSG_TYPE_READ;
-  // assign dmemreq_enq_msg.type_  = `VC_MEM_REQ_MSG_TYPE_WRITE;
   assign dmemreq_enq_msg.type_  = dmemreq_type;
   assign dmemreq_enq_msg.opaque = 8'b0;
   assign dmemreq_enq_msg.addr   = dmemreq_msg_addr;
@@ -365,17 +356,12 @@ module lab2_proc_ProcBaseVRTL
     .imm_type_D              (imm_type_D),
     .imul_req_val_D          (imul_req_val_D),
     .imul_req_rdy_D          (imul_req_rdy_D),
-    .imul_req_msg            (imul_req_msg), // for debug
 
     .ex_result_sel_X         (ex_result_sel_X),
     .reg_en_X                (reg_en_X),
     .imul_resp_val_X         (imul_resp_val_X),
     .imul_resp_rdy_X         (imul_resp_rdy_X),
-    .ex_result_X_out         (ex_result_X_out), // for debug
     .alu_fn_X                (alu_fn_X), 
-    .alu_reslt               (alu_reslt), // For debug
-    .op1_X_out               (op1_X_out),
-    .op2_X_out               (op2_X_out),
 
     .reg_en_M                (reg_en_M),
     .wb_result_sel_M         (wb_result_sel_M),
@@ -391,8 +377,6 @@ module lab2_proc_ProcBaseVRTL
     .br_cond_eq_X            (br_cond_eq_X),
     .br_cond_lt_X            (br_cond_lt_X),
     .br_cond_ltu_X           (br_cond_ltu_X),
-    .op2                     (op2),
-    .imm_gen                 (imm_gen),
 
     // stats_en
 
@@ -448,13 +432,13 @@ module lab2_proc_ProcBaseVRTL
     // vc_trace.append_str( trace_str,  " ostall_hazard_D: " );
     // vc_trace.append_str( trace_str,  str );
 
-     $sformat( str, " %x, ", ctrl.ostall_imul_rdy_D );
-    vc_trace.append_str( trace_str,  "ostall_imul_rdy_D: " );
-    vc_trace.append_str( trace_str,  str );
+    //  $sformat( str, " %x, ", ctrl.ostall_imul_rdy_D );
+    // vc_trace.append_str( trace_str,  "ostall_imul_rdy_D: " );
+    // vc_trace.append_str( trace_str,  str );
 
-     $sformat( str, " %x, ", ctrl.ostall_waddr_X_rs1_D );
-    vc_trace.append_str( trace_str,  "ostall_waddr_X_rs1_D: " );
-    vc_trace.append_str( trace_str,  str );
+    //  $sformat( str, " %x, ", ctrl.ostall_waddr_X_rs1_D );
+    // vc_trace.append_str( trace_str,  "ostall_waddr_X_rs1_D: " );
+    // vc_trace.append_str( trace_str,  str );
 
 
     
