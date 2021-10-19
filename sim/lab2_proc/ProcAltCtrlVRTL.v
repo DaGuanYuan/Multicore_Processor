@@ -491,14 +491,14 @@ module lab2_proc_ProcAltCtrlVRTL
   logic ostall_imul_rdy_D;
   assign ostall_imul_rdy_D = val_D && !imul_req_rdy_D;
   
-  // ostall if write address in X matches rs1 in D
+  // bypass if write address in X matches rs1 in D
 
   logic  bypass_waddr_X_rs1_D;
   assign bypass_waddr_X_rs1_D
     = val_D && rs1_en_D && val_X && rf_wen_pending_X
       && ( inst_rs1_D == rf_waddr_X ) && ( rf_waddr_X != 5'd0 );
 
-  // ostall if write address in M matches rs1 in D
+  // bypass if write address in M matches rs1 in D
 
   logic  bypass_waddr_M_rs1_D;
   assign bypass_waddr_M_rs1_D
@@ -506,14 +506,14 @@ module lab2_proc_ProcAltCtrlVRTL
       && ( inst_rs1_D == rf_waddr_M ) && ( rf_waddr_M != 5'd0 )
       && (dmemreq_type_X != ld);
 
-  // ostall if write address in W matches rs1 in D
+  // bypass if write address in W matches rs1 in D
 
   logic  bypass_waddr_W_rs1_D;
   assign bypass_waddr_W_rs1_D
     = val_D && rs1_en_D && val_W && rf_wen_pending_W
       && ( inst_rs1_D == rf_waddr_W ) && ( rf_waddr_W != 5'd0 );
 
-  // ostall if write address in X matches rs2 in D
+  // bypass if write address in X matches rs2 in D
 
   logic  bypass_waddr_X_rs2_D;
   assign bypass_waddr_X_rs2_D
@@ -527,7 +527,7 @@ module lab2_proc_ProcAltCtrlVRTL
     = val_D && rs2_en_D && val_M && rf_wen_pending_M
       && ( inst_rs2_D == rf_waddr_M ) && ( rf_waddr_M != 5'd0 );
 
-  // ostall if write address in W matches rs2 in D
+  // bypass if write address in W matches rs2 in D
 
   logic  bypass_waddr_W_rs2_D;
   assign bypass_waddr_W_rs2_D
@@ -545,7 +545,7 @@ module lab2_proc_ProcAltCtrlVRTL
   assign ostall_load_use_X_rs2_D 
           = val_D && rs2_en_D && val_X && rf_wen_pending_X
             && (inst_rs2_D == rf_waddr_X) && (rf_waddr_X != 5'd0)
-            && (dmemreq_type_X == ld);
+            && (dmemreq_type_X == ld || csrr_X == y);
 
   // Final ostall signal
 
@@ -604,6 +604,7 @@ module lab2_proc_ProcAltCtrlVRTL
   logic        proc2mngr_val_X;
   logic        stats_en_wen_X;
   logic [3:0]  br_type_X;
+  logic        csrr_X;
 
   // Pipeline registers
 
@@ -623,6 +624,7 @@ module lab2_proc_ProcAltCtrlVRTL
       wb_result_sel_X <= wb_result_sel_D;
       stats_en_wen_X  <= stats_en_wen_D;
       br_type_X       <= br_type_D;
+      csrr_X          <= csrr_D;
     end
 
   // branch logic, redirect PC in F if branch is taken

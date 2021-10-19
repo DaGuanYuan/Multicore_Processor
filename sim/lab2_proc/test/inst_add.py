@@ -13,7 +13,7 @@ from inst_utils import *
 
 def gen_basic_test():
   return """
-    csrr x1, mngr2proc < 5
+    csrr x1, mngr2proc < 5  
     csrr x2, mngr2proc < 4
     nop
     nop
@@ -145,7 +145,7 @@ def gen_value_test():
 
 def gen_random_test():
   asm_code = []
-  for i in xrange(100):
+  for i in xrange(2):
     src0 = Bits( 32, random.randint(0,0xffffffff) )
     src1 = Bits( 32, random.randint(0,0xffffffff) )
     dest = src0 + src1

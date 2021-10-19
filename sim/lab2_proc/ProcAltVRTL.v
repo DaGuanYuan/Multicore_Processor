@@ -432,21 +432,28 @@ module lab2_proc_ProcAltVRTL
     end else
       vc_trace.append_str( trace_str, { 3896'b0, rv2isa.disasm( ctrl.inst_D ) } );
 
-    $sformat( str, " %x, ", dpath.op1_byp_sel_D );
-    vc_trace.append_str( trace_str,  " op1_byp_sel: " );
-    vc_trace.append_str( trace_str,  str );
+    // $sformat( str, " %x, ", ctrl.op2_sel_D );
+    // vc_trace.append_str( trace_str,  " op2_sel_D: " );
+    // vc_trace.append_str( trace_str,  str );
+    
+    // $sformat( str, " %x, ", ctrl.ostall_load_use_X_rs2_D );
+    // vc_trace.append_str( trace_str,  " ostall_load_use_X_rs2_D: " );
+    // vc_trace.append_str( trace_str,  str );
 
-    $sformat( str, " %x, ", dpath.op2_byp_sel_D );
-    vc_trace.append_str( trace_str,  " op2_byp_sel: " );
-    vc_trace.append_str( trace_str,  str );
+    
+    // $sformat( str, " %x, ", dpath.op2_bprf );
+    // vc_trace.append_str( trace_str,  " op2_bprf: " );
+    // vc_trace.append_str( trace_str,  str );
 
-     $sformat( str, " %x, ", ctrl.dmemreq_type_X );
-    vc_trace.append_str( trace_str,  "dmemreq_type_X: " );
-    vc_trace.append_str( trace_str,  str );
+  
 
-    $sformat( str, " %x, ", ctrl.bypass_waddr_W_rs1_D );
-    vc_trace.append_str( trace_str,  "bypass_waddr_W_rs1_D: " );
-    vc_trace.append_str( trace_str,  str );
+    //  $sformat( str, " %x, ", ctrl.mngr2proc_val );
+    // vc_trace.append_str( trace_str,  "mngr2proc_val: " );
+    // vc_trace.append_str( trace_str,  str );
+
+    // $sformat( str, " %x, ", ctrl.bypass_waddr_W_rs1_D );
+    // vc_trace.append_str( trace_str,  "bypass_waddr_W_rs1_D: " );
+    // vc_trace.append_str( trace_str,  str );
 
     
 
@@ -474,6 +481,7 @@ module lab2_proc_ProcAltVRTL
 
     vc_trace.append_str( trace_str, "|" );
 
+
     if ( !ctrl.val_M )
       vc_trace.append_chars( trace_str, " ", 4 );
     else if ( ctrl.stall_M ) begin
@@ -481,6 +489,10 @@ module lab2_proc_ProcAltVRTL
       vc_trace.append_chars( trace_str, " ", 4-1 );
     end else
       vc_trace.append_str( trace_str, { 4064'b0, rv2isa.disasm_tiny( ctrl.inst_M ) } );
+
+    // $sformat( str, " %x", dpath.ex_result_X );
+    // vc_trace.append_str( trace_str,  " ex_result_X: " );
+    // vc_trace.append_str( trace_str,  str );
 
     vc_trace.append_str( trace_str, "|" );
 

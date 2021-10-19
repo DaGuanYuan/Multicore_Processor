@@ -440,12 +440,35 @@ module lab2_proc_ProcBaseVRTL
     end else
       vc_trace.append_str( trace_str, { 3896'b0, rv2isa.disasm( ctrl.inst_D ) } );
 
-    // $sformat( str, "%x", dpath.imm_type_D );
-    // vc_trace.append_str( trace_str,  " imm_type: " );
+    // $sformat( str, " %x, ", ctrl.ostall_mngr2proc_D );
+    // vc_trace.append_str( trace_str,  " ostall_mngr2proc_D: " );
     // vc_trace.append_str( trace_str,  str );
-    $sformat( str, " %x", dpath.imm_gen );
-    vc_trace.append_str( trace_str,  " imm: " );
+
+    // $sformat( str, " %x, ", ctrl.ostall_hazard_D );
+    // vc_trace.append_str( trace_str,  " ostall_hazard_D: " );
+    // vc_trace.append_str( trace_str,  str );
+
+     $sformat( str, " %x, ", ctrl.ostall_imul_rdy_D );
+    vc_trace.append_str( trace_str,  "ostall_imul_rdy_D: " );
     vc_trace.append_str( trace_str,  str );
+
+     $sformat( str, " %x, ", ctrl.ostall_waddr_X_rs1_D );
+    vc_trace.append_str( trace_str,  "ostall_waddr_X_rs1_D: " );
+    vc_trace.append_str( trace_str,  str );
+
+
+    
+    // $sformat( str, " %x, ", ctrl.ostall_D );
+    // vc_trace.append_str( trace_str,  "D: " );
+    // vc_trace.append_str( trace_str,  str );
+
+    // $sformat( str, " %x, ", ctrl.ostall_X );
+    // vc_trace.append_str( trace_str,  "X: " );
+    // vc_trace.append_str( trace_str,  str );
+
+    // $sformat( str, " %x, ", ctrl.ostall_M );
+    // vc_trace.append_str( trace_str,  "M: " );
+    // vc_trace.append_str( trace_str,  str );
 
     vc_trace.append_str( trace_str, "|" );
 

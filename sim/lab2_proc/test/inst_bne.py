@@ -283,7 +283,7 @@ def gen_back_to_back_test():
      y0:
 
      bne  x3, x0, X1
-     csrw x0, proc2mngr
+     csrw proc2mngr, x0
      nop
      a1:
      csrw proc2mngr, x1 > 1

@@ -66,7 +66,7 @@ def gen_src0_dep_test():
     gen_rr_src0_dep_test( 3, "slt", 10, 10, 0),
     gen_rr_src0_dep_test( 2, "slt", -7, 1, 1),
     gen_rr_src0_dep_test( 1, "slt", -4, 4, 1),
-    gen_rr_src0_dep_test( 0, "slt", 8, 1, 0),
+    gen_rr_src0_dep_test( 1, "slt", 8, 1, 0),
   ]
 
 

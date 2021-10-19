@@ -53,3 +53,143 @@ def gen_basic_test():
 # ''' LAB TASK ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 # Define additional directed and random test cases.
 # '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+#-------------------------------------------------------------------------
+# gen_src0_dep_taken_test
+#-------------------------------------------------------------------------
+
+def gen_src0_dep_nottaken_test():
+  return [
+    gen_br2_src0_dep_test( 5, "beq", 7, 7, True ),
+    gen_br2_src0_dep_test( 4, "beq", 7, 7, True ),
+    gen_br2_src0_dep_test( 3, "beq", 7, 7, True ),
+    gen_br2_src0_dep_test( 2, "beq", 7, 7, True ),
+    gen_br2_src0_dep_test( 1, "beq", 7, 7, True ),
+    gen_br2_src0_dep_test( 0, "beq", 7, 7, True ),
+  ]
+
+#-------------------------------------------------------------------------
+# gen_src0_dep_not_taken_test
+#-------------------------------------------------------------------------
+
+def gen_src0_dep_taken_test():
+  return [
+    gen_br2_src0_dep_test( 5, "beq", 1, 7, False ),
+    gen_br2_src0_dep_test( 4, "beq", 2, 7, False ),
+    gen_br2_src0_dep_test( 3, "beq", 3, 7, False ),
+    gen_br2_src0_dep_test( 2, "beq", 4, 7, False ),
+    gen_br2_src0_dep_test( 1, "beq", 5, 7, False ),
+    gen_br2_src0_dep_test( 0, "beq", 6, 7, False ),
+  ]
+
+#-------------------------------------------------------------------------
+# gen_src1_dep_taken_test
+#-------------------------------------------------------------------------
+
+def gen_src1_dep_taken_test():
+  return [
+    gen_br2_src1_dep_test( 5, "beq", 7, 7, True ),
+    gen_br2_src1_dep_test( 4, "beq", 7, 7, True ),
+    gen_br2_src1_dep_test( 3, "beq", 7, 7, True ),
+    gen_br2_src1_dep_test( 2, "beq", 7, 7, True ),
+    gen_br2_src1_dep_test( 1, "beq", 7, 7, True ),
+    gen_br2_src1_dep_test( 0, "beq", 7, 7, True ),
+  ]
+
+#-------------------------------------------------------------------------
+# gen_src1_dep_nottaken_test
+#-------------------------------------------------------------------------
+
+def gen_src1_dep_nottaken_test():
+  return [
+    gen_br2_src1_dep_test( 5, "beq", 7, 1, False ),
+    gen_br2_src1_dep_test( 4, "beq", 7, 2, False ),
+    gen_br2_src1_dep_test( 3, "beq", 7, 3, False ),
+    gen_br2_src1_dep_test( 2, "beq", 7, 4, False ),
+    gen_br2_src1_dep_test( 1, "beq", 7, 5, False ),
+    gen_br2_src1_dep_test( 0, "beq", 7, 6, False ),
+  ]
+
+#-------------------------------------------------------------------------
+# gen_srcs_dep_taken_test
+#-------------------------------------------------------------------------
+
+def gen_srcs_dep_taken_test():
+  return [
+    gen_br2_srcs_dep_test( 5, "beq", 1, 1, True ),
+    gen_br2_srcs_dep_test( 4, "beq", 2, 2, True ),
+    gen_br2_srcs_dep_test( 3, "beq", 3, 3, True ),
+    gen_br2_srcs_dep_test( 2, "beq", 4, 4, True ),
+    gen_br2_srcs_dep_test( 1, "beq", 5, 5, True ),
+    gen_br2_srcs_dep_test( 0, "beq", 6, 6, True ),
+  ]
+
+#-------------------------------------------------------------------------
+# gen_srcs_dep_nottaken_test
+#-------------------------------------------------------------------------
+
+def gen_srcs_dep_nottaken_test():
+  return [
+    gen_br2_srcs_dep_test( 5, "beq", 1, 2, False ),
+    gen_br2_srcs_dep_test( 4, "beq", 2, 3, False ),
+    gen_br2_srcs_dep_test( 3, "beq", 3, 4, False ),
+    gen_br2_srcs_dep_test( 2, "beq", 4, 5, False ),
+    gen_br2_srcs_dep_test( 1, "beq", 5, 6, False ),
+    gen_br2_srcs_dep_test( 0, "beq", 6, 7, False ),
+  ]
+
+#-------------------------------------------------------------------------
+# gen_src0_eq_src1_taken_test
+#-------------------------------------------------------------------------
+
+def gen_src0_eq_src1_test():
+  return [
+    gen_br2_src0_eq_src1_test( "beq", 1, True ),
+  ]
+
+#-------------------------------------------------------------------------
+# gen_value_test
+#-------------------------------------------------------------------------
+
+def gen_value_test():
+  return [
+
+    gen_br2_value_test( "beq", -1, -1, True ),
+    gen_br2_value_test( "beq", -1,  0, False  ),
+    gen_br2_value_test( "beq", -1,  1, False  ),
+
+    gen_br2_value_test( "beq",  0, -1, False  ),
+    gen_br2_value_test( "beq",  0,  0, True ),
+    gen_br2_value_test( "beq",  0,  1, False  ),
+
+    gen_br2_value_test( "beq",  1, -1, False  ),
+    gen_br2_value_test( "beq",  1,  0, False  ),
+    gen_br2_value_test( "beq",  1,  1, True ),
+
+    gen_br2_value_test( "beq", 0xfffffff7, 0xfffffff7, True ),
+    gen_br2_value_test( "beq", 0x7fffffff, 0x7fffffff, True ),
+    gen_br2_value_test( "beq", 0xfffffff7, 0x7fffffff, False  ),
+    gen_br2_value_test( "beq", 0x7fffffff, 0xfffffff7, False  ),
+
+  ]
+
+#-------------------------------------------------------------------------
+# gen_random_test
+#-------------------------------------------------------------------------
+
+def gen_random_test():
+  asm_code = []
+  for i in xrange(25):
+    taken = random.choice([True, False])
+    src0  = Bits( 32, random.randint(0,0xffffffff) )
+    if taken:
+      # Branch taken, operands are equal
+      src1 = src0
+    else:
+      # Branch not taken, operands are unequal
+      src1 = Bits( 32, random.randint(0,0xffffffff) )
+      # Rare case, but could happen
+      if src0 == src1:
+        src1 = src0 + 1
+    asm_code.append( gen_br2_value_test( "beq", src0.uint(), src1.uint(), taken ) )
+  return asm_code
