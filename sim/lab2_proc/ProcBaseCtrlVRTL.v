@@ -176,10 +176,10 @@ module lab2_proc_ProcBaseCtrlVRTL
   // PC select logic
 
   always_comb begin
-    if ( pc_redirect_D )            // If instruction in D is jump
-      pc_sel_F = pc_sel_D;
-    else if ( pc_redirect_X )       // If a branch is taken in X stage
+    if ( pc_redirect_X )       // If a branch is taken in X stage
       pc_sel_F = pc_sel_X;        // Use pc from X
+    else if ( pc_redirect_D )            // If instruction in D is jump
+      pc_sel_F = pc_sel_D;
     else
       pc_sel_F = 2'b0;         // Use pc+4
   end
