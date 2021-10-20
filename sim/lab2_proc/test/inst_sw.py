@@ -102,32 +102,32 @@ def gen_value_test():
   return [
 # Test positive offsets
     gen_st_value_test( "sw",    0, 0x00002000, 0xdeadbeef),
-#     gen_st_value_test( "sw",    4, 0x00002000, 0x00010203),
-#     gen_st_value_test( "sw",    8, 0x00002000, 0x04050607),
-#     gen_st_value_test( "sw",   12, 0x00002000, 0x08090a0b),
-#     gen_st_value_test( "sw",   16, 0x00002000, 0x0c0d0e0f),
-#     gen_st_value_test( "sw",   20, 0x00002000, 0xcafecafe),
-# # Test negative offsets
-#     gen_st_value_test( "sw",  -20, 0x00002014, 0xdeadbeef),
-#     gen_st_value_test( "sw",  -16, 0x00002014, 0x00010203),
-#     gen_st_value_test( "sw",  -12, 0x00002014, 0x04050607),
-#     gen_st_value_test( "sw",   -8, 0x00002014, 0x08090a0b),
-#     gen_st_value_test( "sw",   -4, 0x00002014, 0x0c0d0e0f),
-#     gen_st_value_test( "sw",    0, 0x00002014, 0xcafecafe),
-# # Test positive offset with unaligned base
-#     gen_st_value_test( "sw",    1, 0x00001fff, 0xdeadbeef),
-#     gen_st_value_test( "sw",    5, 0x00001fff, 0x00010203),
-#     gen_st_value_test( "sw",    9, 0x00001fff, 0x04050607),
-#     gen_st_value_test( "sw",   13, 0x00001fff, 0x08090a0b),
-#     gen_st_value_test( "sw",   17, 0x00001fff, 0x0c0d0e0f),
-#     gen_st_value_test( "sw",   21, 0x00001fff, 0xcafecafe),
-# # Test negative offset with unaligned base
-#     gen_st_value_test( "sw",  -21, 0x00002015, 0xdeadbeef),
-#     gen_st_value_test( "sw",  -17, 0x00002015, 0x00010203),
-#     gen_st_value_test( "sw",  -13, 0x00002015, 0x04050607),
-#     gen_st_value_test( "sw",   -9, 0x00002015, 0x08090a0b),
-#     gen_st_value_test( "sw",   -5, 0x00002015, 0x0c0d0e0f),
-#     gen_st_value_test( "sw",   -1, 0x00002015, 0xcafecafe),
+    gen_st_value_test( "sw",    4, 0x00002000, 0x00010203),
+    gen_st_value_test( "sw",    8, 0x00002000, 0x04050607),
+    gen_st_value_test( "sw",   12, 0x00002000, 0x08090a0b),
+    gen_st_value_test( "sw",   16, 0x00002000, 0x0c0d0e0f),
+    gen_st_value_test( "sw",   20, 0x00002000, 0xcafecafe),
+# Test negative offsets
+    gen_st_value_test( "sw",  -20, 0x00002014, 0xdeadbeef),
+    gen_st_value_test( "sw",  -16, 0x00002014, 0x00010203),
+    gen_st_value_test( "sw",  -12, 0x00002014, 0x04050607),
+    gen_st_value_test( "sw",   -8, 0x00002014, 0x08090a0b),
+    gen_st_value_test( "sw",   -4, 0x00002014, 0x0c0d0e0f),
+    gen_st_value_test( "sw",    0, 0x00002014, 0xcafecafe),
+# Test positive offset with unaligned base
+    gen_st_value_test( "sw",    1, 0x00001fff, 0xdeadbeef),
+    gen_st_value_test( "sw",    5, 0x00001fff, 0x00010203),
+    gen_st_value_test( "sw",    9, 0x00001fff, 0x04050607),
+    gen_st_value_test( "sw",   13, 0x00001fff, 0x08090a0b),
+    gen_st_value_test( "sw",   17, 0x00001fff, 0x0c0d0e0f),
+    gen_st_value_test( "sw",   21, 0x00001fff, 0xcafecafe),
+# Test negative offset with unaligned base
+    gen_st_value_test( "sw",  -21, 0x00002015, 0xdeadbeef),
+    gen_st_value_test( "sw",  -17, 0x00002015, 0x00010203),
+    gen_st_value_test( "sw",  -13, 0x00002015, 0x04050607),
+    gen_st_value_test( "sw",   -9, 0x00002015, 0x08090a0b),
+    gen_st_value_test( "sw",   -5, 0x00002015, 0x0c0d0e0f),
+    gen_st_value_test( "sw",   -1, 0x00002015, 0xcafecafe),
   ]
 
 def gen_random_test():

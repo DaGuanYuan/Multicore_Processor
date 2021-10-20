@@ -66,7 +66,7 @@ def resp( a ):
   return Bits( 32, a, trunc=True )
 
 toy_test_msgs = [
- req(           4  ,           5  ), resp(                       20  )
+ req(           2  ,           3  ), resp(                       6  )
 ]
 #----------------------------------------------------------------------
 # Test Case: small positive * positive

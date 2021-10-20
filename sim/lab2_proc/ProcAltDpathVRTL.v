@@ -2,8 +2,8 @@
 // 5-Stage Stalling Pipelined Processor Datapath
 //=========================================================================
 
-`ifndef LAB2_PROC_PIPELINED_PROC_BASE_DPATH_V
-`define LAB2_PROC_PIPELINED_PROC_BASE_DPATH_V
+`ifndef LAB2_PROC_PIPELINED_PROC_ALT_DPATH_V
+`define LAB2_PROC_PIPELINED_PROC_ALT_DPATH_V
 
 `include "vc/arithmetic.v"
 `include "vc/mem-msgs.v"
@@ -15,7 +15,7 @@
 `include "lab2_proc/ProcDpathComponentsVRTL.v"
 `include "lab1_imul/IntMulAltVRTL.v"
 
-module lab2_proc_ProcBaseDpathVRTL
+module lab2_proc_ProcAltDpathVRTL
 #(
   parameter p_num_cores = 1
 )
@@ -57,6 +57,8 @@ module lab2_proc_ProcBaseDpathVRTL
   input  logic [2:0]  imm_type_D,
   input  logic        imul_req_val_D,
   output logic        imul_req_rdy_D,
+  input  logic [1:0]  op1_byp_sel_D,
+  input  logic [1:0]  op2_byp_sel_D,
   output logic        imul_resp_val_X,
   input  logic        imul_resp_rdy_X,
 
@@ -82,7 +84,6 @@ module lab2_proc_ProcBaseDpathVRTL
   // stats output
 
   output logic        stats_en
-
 );
 
   localparam c_reset_vector = 32'h200;
@@ -211,12 +212,34 @@ module lab2_proc_ProcBaseDpathVRTL
    .out  (csrr_data_D)
   );
 
+  logic [31:0] op1_bprf;
+  vc_Mux4 #(32) op1_byp_mux_D
+  (
+    .in0(rf_rdata0_D),
+    .in1(bypass_from_X),
+    .in2(bypass_from_M),
+    .in3(bypass_from_W),
+    .sel(op1_byp_sel_D),
+    .out(op1_bprf)
+  );
+
   vc_Mux2 #(32) op1_sel_mux_D
   (
-    .in0  (rf_rdata0_D),
+    .in0  (op1_bprf),
     .in1  (pc_D),
     .sel  (op1_sel_D),
     .out  (op1_D)
+  );
+
+  logic [31:0] op2_bprf;
+  vc_Mux4 #(32) op2_byp_mux_D
+  (
+    .in0(rf_rdata1_D),
+    .in1(bypass_from_X),
+    .in2(bypass_from_M),
+    .in3(bypass_from_W),
+    .sel(op2_byp_sel_D),
+    .out(op2_bprf)
   );
 
   // op2 select mux
@@ -224,7 +247,7 @@ module lab2_proc_ProcBaseDpathVRTL
   // csrr sel mux. Basically we are using two muxes here for pedagogy.
   vc_Mux3 #(32) op2_sel_mux_D
   (
-    .in0  (rf_rdata1_D),
+    .in0  (op2_bprf),
     .in1  (imm_D),
     .in2  (csrr_data_D),
     .sel  (op2_sel_D),
@@ -287,7 +310,7 @@ module lab2_proc_ProcBaseDpathVRTL
     .clk    (clk),
     .reset  (reset),
     .en     (reg_en_X),
-    .d      (rf_rdata1_D),
+    .d      (op2_bprf),
     .q      (dmemreq_msg_data)
   );
 
@@ -341,6 +364,10 @@ module lab2_proc_ProcBaseDpathVRTL
     .out    (ex_result_X)
   );
 
+  logic [31:0] bypass_from_X;
+
+  assign bypass_from_X    = ex_result_X;
+
   assign dmemreq_msg_addr = alu_result_X;
 
   assign jalr_target_D    = alu_result_X;
@@ -373,6 +400,9 @@ module lab2_proc_ProcBaseDpathVRTL
     .out    (wb_result_M)
   );
 
+  logic [31:0] bypass_from_M;
+  assign bypass_from_M = wb_result_M;
+
   //--------------------------------------------------------------------
   // W stage
   //--------------------------------------------------------------------
@@ -391,6 +421,9 @@ module lab2_proc_ProcBaseDpathVRTL
   assign proc2mngr_data = wb_result_W;
 
   assign rf_wdata_W = wb_result_W;
+
+  logic [31:0] bypass_from_W;
+  assign bypass_from_W = wb_result_W;
 
   // stats output
   // note the stats en is full 32-bit here but the outside port is one

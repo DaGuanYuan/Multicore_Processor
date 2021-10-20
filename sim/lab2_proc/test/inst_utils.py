@@ -369,6 +369,431 @@ def gen_imm_dest_dep_test( num_nops, inst, imm, result ):
 def gen_imm_value_test( inst, imm, result ):
   return gen_imm_template( 0, inst, imm, result )
 
+
+#-------------------------------------------------------------------------
+# gen_simpleJump_template
+#-------------------------------------------------------------------------
+# Template for simple instructions with no source.
+gen_jal_simple_template_id = 0
+def gen_jal_simple_template(
+  inst="jal", reg_src0="x1"
+):
+
+  global gen_jal_simple_template_id
+  id_a = "label_{}".format( gen_jal_simple_template_id + 1 )
+  gen_jal_simple_template_id += 1
+
+  return """
+  addi x2, x0, 0
+  auipc x3, 0
+  addi x3, x3, 12
+  {inst} {reg_src0}, {id_a}
+  addi x2, x2, 0b0001
+{id_a}:
+  addi x2, x2, 0b0010
+sub {reg_src0}, {reg_src0}, x3
+csrw proc2mngr, x2 > 0b0010
+csrw proc2mngr, {reg_src0} > 0
+    
+  """.format(**locals())
+
+def gen_jal_simple_test():
+  return gen_jal_simple_template()
+
+#-------------------------------------------------------------------------
+# gen_jump_template
+#-------------------------------------------------------------------------
+# Template for jump instructions with no source.
+gen_jal_seq_template_id = 0
+def gen_jal_seq_template(
+  inst="jal", reg_src0="x1"
+):
+
+  global gen_jal_seq_template_id
+  id_a = "label_{}".format( gen_jal_seq_template_id + 1 )
+  id_b = "label_{}".format( gen_jal_seq_template_id + 2 )
+  id_c = "label_{}".format( gen_jal_seq_template_id + 3 )
+  id_d = "label_{}".format( gen_jal_seq_template_id + 4 )
+  gen_jal_seq_template_id += 4
+
+  return """
+  # x2 stores execution sequence
+  # x1 default to be the rd
+  # x3 stores the correct return addr that should in rd
+  addi x2, x0, 0
+  auipc x3, 0
+  addi x3, x3, 12
+  {inst} {reg_src0}, {id_a}
+  addi x2, x2, 0b0001 #1st
+{id_a}:
+  addi x2, x2, 0b0010 #2nd
+  addi x4, {reg_src0}, 0
+  auipc x5, 0
+  addi x5, x5, 12
+  {inst} {reg_src0}, {id_b}
+  addi x2, x2, 0b0100 #3rd
+{id_b}:
+  addi x2, x2, 0b1000 #4th
+  addi x6, {reg_src0}, 0
+  auipc x7, 0
+  addi x7, x7, 12
+  {inst} {reg_src0}, {id_c}
+  addi x2, x2, 0b10000 #5th
+{id_c}:
+  addi x2, x2, 0b100000 #6th
+  addi x8, {reg_src0}, 0
+  auipc x9, 0
+  addi x9, x9, 12
+  {inst} {reg_src0}, {id_d}
+  addi x2, x2, 0b1000000 #7th
+{id_d}:
+  addi x2, x2, 0b10000000 #8th
+  addi x10, {reg_src0}, 0
+  
+sub x3, x3, x4
+sub x5, x5, x6
+sub x7, x7, x8
+sub x9, x9, x10
+csrw proc2mngr, x2 > 0b10101010
+csrw proc2mngr, x3 > 0
+csrw proc2mngr, x5 > 0
+csrw proc2mngr, x7 > 0
+csrw proc2mngr, x9 > 0
+    
+  """.format(**locals())
+
+def gen_jal_seq_test():
+  return gen_jal_seq_template()
+
+#-------------------------------------------------------------------------
+# gen_jump_back_template
+#-------------------------------------------------------------------------
+# Template for jump instructions.
+gen_jal_back_template_id = 0
+def gen_jal_back_template(
+  inst="jal", reg_src0="x1"
+):
+
+  global gen_jal_back_template_id
+  id_a = "label_{}".format( gen_jal_back_template_id + 1 )
+  id_b = "label_{}".format( gen_jal_back_template_id + 2 )
+  id_c = "label_{}".format( gen_jal_back_template_id + 3 )
+  id_d = "label_{}".format( gen_jal_back_template_id + 4 )
+  id_e = "label_{}".format( gen_jal_back_template_id + 5 )
+  gen_jal_back_template_id += 5
+  return """
+  addi x2, x0, 0
+  auipc x3, 0
+  addi x3, x3, 12
+  {inst} {reg_src0}, {id_a}
+  addi x2, x2, 0b0001
+{id_c}:
+  addi x2, x2, 0b100000 #6th
+  addi x8, {reg_src0}, 0
+  auipc x9, 0
+  addi x9, x9, 12
+  {inst} {reg_src0}, {id_d}
+  addi x2, x2, 0b1000000 #7th
+{id_b}:
+  addi x2, x2, 0b1000 #4th
+  addi x6, {reg_src0}, 0
+  auipc x7, 0
+  addi x7, x7, 12
+  {inst} {reg_src0}, {id_c}
+  addi x2, x2, 0b10000 #5th
+{id_a}:
+  addi x2, x2, 0b0010 #2nd
+  addi x4, {reg_src0}, 0
+  auipc x5, 0
+  addi x5, x5, 12
+  {inst} {reg_src0}, {id_b}
+  addi x2, x2, 0b0100 #3rd
+{id_d}:
+  addi x2, x2, 0b10000000 #8th
+  addi x10, {reg_src0}, 0
+sub x3, x3, x4
+sub x5, x5, x6
+sub x7, x7, x8
+sub x9, x9, x10
+csrw proc2mngr, x2 > 0b10101010
+csrw proc2mngr, x3 > 0
+csrw proc2mngr, x5 > 0
+csrw proc2mngr, x7 > 0
+csrw proc2mngr, x9 > 0
+  
+  """.format(**locals())
+#-------------------------------------------------------------------------
+# gen_jump_template
+#-------------------------------------------------------------------------
+# Template for jump instructions with no source.
+
+gen_jal_template_id = 0
+def gen_jal_template(
+  inst="jal", reg_src0="x1"
+):
+
+  global gen_jal_template_id
+  id_a = "label_{}".format( gen_jal_template_id + 1 )
+  id_b = "label_{}".format( gen_jal_template_id + 2 )
+  id_c = "label_{}".format( gen_jal_template_id + 3 )
+  gen_jal_template_id += 3
+
+  return """
+  # Use x3 to track the control flow pattern 
+  addi x3, x0, 0                # 0x200
+  
+  auipc x7, 0                   # 0x204
+  addi x7, x7, 12               # 0x208
+  {inst}  {reg_src0}, {id_a}    # 0x20c    #jal -----.
+  addi x3, x3, 0b000001         # 0x210    #         |
+                                           #         |
+{id_b}:                                    #    <----|--.
+    addi x3, x3, 0b000010       # 0x214    #         |  |
+    addi x5, {reg_src0}, 0      # 0x218    #         |  |
+    auipc x8, 0                                      |  |
+    addi x8, x8, 12                                  |  |
+    {inst}  {reg_src0}, {id_c}  # 0x21c    #jal     -|--|---.
+    addi x1, x3, 0b000100       # 0x220    #         |  |   |
+                                           #         |  |   |
+{id_a}:                                    #   <-----'  |   |
+    addi x3, x3, 0b001000       # 0x22c    #            |   |
+    addi x4, {reg_src0}, 0      # 0x230    #            |   |
+    auipc x9, 0                 # 0x234                 |   |
+    addi x9, x9, 12             # 0x238                 |   |
+    {inst}  {reg_src0}, {id_b}  # 0x23c    #jal --------'   |
+    addi x3, x3, 0b010000       # 0x240    #                |
+                                           #                |
+{id_c}:                                    #          <-----'
+    addi x3, x3, 0b100000       # 0x244
+    addi x6, {reg_src0}, 0      # 0x248
+  csrw proc2mngr, x3 > 0b101010
+  sub x4, x4, x7
+  sub x5, x5, x9
+  sub x6, x6, x8
+  csrw proc2mngr, x4 > 0
+  csrw proc2mngr, x5 > 0
+  csrw proc2mngr, x6 > 0
+  
+  """.format(**locals())
+
+def gen_jal_test():
+  return gen_jal_template("jal","x1")
+
+#-------------------------------------------------------------------------
+# gen_jal_random_template
+#-------------------------------------------------------------------------
+gen_jal_random_template_id = 0
+def gen_jal_random_template(
+  inst="jal", reg_src0="x1", target="label_1"
+):
+
+  target_numb = int(target.replace("label_", ""), 0)
+
+
+  global gen_jal_random_template_id
+  ctrl_seq_val = 0
+
+  if target_numb == 1:
+    ctrl_seq_val = 0xfffff800 + 0b10
+    target = "label_{}".format(gen_jal_random_template_id + 1)
+  elif target_numb == 2:
+    ctrl_seq_val = 0xfffff800 + 0b1000
+    target = "label_{}".format(gen_jal_random_template_id + 2)
+  elif target_numb == 3:
+    ctrl_seq_val = 0xfffff800 + 0b100000
+    target = "label_{}".format(gen_jal_random_template_id + 3)
+  elif target_numb == 4:
+    ctrl_seq_val = 0xfffff800 + 0b10000000
+    target = "label_{}".format(gen_jal_random_template_id + 4)
+  elif target_numb == 5:
+    ctrl_seq_val = 0xfffff800 + 0b1000000000
+    target = "label_{}".format(gen_jal_random_template_id + 5)
+
+  id_a = "label_{}".format( gen_jal_random_template_id + 1 )
+  id_b = "label_{}".format( gen_jal_random_template_id + 2 )
+  id_c = "label_{}".format( gen_jal_random_template_id + 3 )
+  id_d = "label_{}".format( gen_jal_random_template_id + 4 )
+  id_e = "label_{}".format( gen_jal_random_template_id + 5 )
+  id_f = "label_{}".format( gen_jal_random_template_id + 6 )
+  gen_jal_random_template_id += 6
+  
+  return """
+  addi x2, x0, 0
+  auipc x3, 0
+  addi x3, x3, 12
+  {inst} {reg_src0}, {target}
+  addi x2, x2, 0b1
+{id_a}:
+  addi x2, x2, 0b10
+  addi x4, {reg_src0}, 0
+  auipc x5, 0
+  addi x5, x5, 12
+  {inst} {reg_src0}, {id_f}
+  addi x2, x2, 0b100
+{id_b}:
+  addi x2, x2, 0b1000
+  addi x4, {reg_src0}, 0
+  auipc x5, 0
+  addi x5, x5, 12
+  {inst} {reg_src0}, {id_f}
+  addi x2, x2, 0b10000
+{id_c}:
+  addi x2, x2, 0b100000
+  addi x4, {reg_src0}, 0
+  auipc x5, 0
+  addi x5, x5, 12
+  {inst} {reg_src0}, {id_f}
+  addi x2, x2, 0b1000000
+{id_d}:
+  addi x2, x2, 0b10000000
+  addi x4, {reg_src0}, 0
+  auipc x5, 0
+  addi x5, x5, 12
+  {inst} {reg_src0}, {id_f}
+  addi x2, x2, 0b100000000
+{id_e}:
+  addi x2, x2, 0b1000000000
+  addi x4, {reg_src0}, 0
+  auipc x5, 0
+  addi x5, x5, 12
+  {inst} {reg_src0}, {id_f}
+  addi x2, x2, 0b10000000000
+{id_f}:
+  addi x2, x2, 0b100000000000
+  addi x6, {reg_src0}, 0
+  
+  sub x3, x3, x4
+  sub x5, x5, x6
+  csrw   proc2mngr, x2 > {ctrl_seq_val}
+  csrw   proc2mngr, x3 > 0
+  csrw   proc2mngr, x5 > 0
+  """.format(**locals())
+
+def gen_jal_value_test (inst, target):
+  return gen_jal_random_template(inst=inst, target=target)
+
+#-------------------------------------------------------------------------
+# gen_simpleJump_template
+#-------------------------------------------------------------------------
+# Template for simple instructions with no source.
+gen_jalr_simple_template_id = 0
+def gen_jalr_simple_template(
+  inst="jalr", reg_src0="x1", reg_src1="x2"
+):
+
+  global gen_jalr_simple_template_id
+  id_a = "label_{}".format( gen_jalr_simple_template_id + 1 )
+  gen_jalr_simple_template_id += 1
+
+  return """
+  lui  {reg_src1},     %hi[{id_a}]
+  addi {reg_src1}, {reg_src1}, %lo[{id_a}]
+  addi x3, x0, 0
+  auipc x4, 0
+  addi x4, x4, 12
+  {inst} {reg_src0}, {reg_src1}, 0
+  addi x3, x3, 0b0001
+{id_a}:
+  addi x3, x3, 0b0010
+  sub {reg_src0}, {reg_src0}, x4
+  csrw proc2mngr, x3 > 0b0010
+  csrw proc2mngr, {reg_src0} > 0
+    
+  """.format(**locals())
+
+def gen_jalr_simple_test():
+  return gen_jalr_simple_template()
+
+#-------------------------------------------------------------------------
+# gen_jump_back_template
+#-------------------------------------------------------------------------
+# Template for jump instructions.
+gen_jalr_random_template_id = 0
+def gen_jalr_random_template(
+  inst="jalr", reg_src0="x1", reg_src1="x10",  imm=0
+):
+
+  imm = imm - imm % 24
+
+  global gen_jalr_random_template_id
+
+  ctrl_seq_val = 0
+  if imm == 0:
+    ctrl_seq_val = 0xfffff800 + 0b10
+  elif imm == 24:
+    ctrl_seq_val = 0xfffff800 + 0b1000
+  elif imm == 48:
+    ctrl_seq_val = 0xfffff800 + 0b100000
+  elif imm == 72:
+    ctrl_seq_val = 0xfffff800 + 0b10000000
+  elif imm == 96:
+    ctrl_seq_val = 0xfffff800 + 0b1000000000
+
+  id_a = "label_{}".format( gen_jalr_random_template_id + 1 )
+  id_b = "label_{}".format( gen_jalr_random_template_id + 2 )
+  id_c = "label_{}".format( gen_jalr_random_template_id + 3 )
+  id_d = "label_{}".format( gen_jalr_random_template_id + 4 )
+  id_e = "label_{}".format( gen_jalr_random_template_id + 5 )
+  id_f = "label_{}".format( gen_jalr_random_template_id + 6 )
+  gen_jalr_random_template_id += 6
+  
+  return """
+  addi x2, x0, 0
+  lui x10,              %hi[{id_a}]
+  addi x10, x10,        %lo[{id_a}]
+  auipc x3, 0
+  addi x3, x3, 12
+  jalr x1, x10, {imm}
+{id_a}:
+  addi x2, x2, 0b10
+  addi x4, {reg_src0}, 0
+  auipc x5, 0
+  addi x5, x5, 12
+  jal {reg_src0}, {id_f}
+  addi x2, x2, 0b100
+{id_b}:
+  addi x2, x2, 0b1000
+  addi x4, {reg_src0}, 0
+  auipc x5, 0
+  addi x5, x5, 12
+  jal {reg_src0}, {id_f}
+  addi x2, x2, 0b10000
+{id_c}:
+  addi x2, x2, 0b100000
+  addi x4, {reg_src0}, 0
+  auipc x5, 0
+  addi x5, x5, 12
+  jal {reg_src0}, {id_f}
+  addi x2, x2, 0b1000000
+{id_d}:
+  addi x2, x2, 0b10000000
+  addi x4, {reg_src0}, 0
+  auipc x5, 0
+  addi x5, x5, 12
+  jal {reg_src0}, {id_f}
+  addi x2, x2, 0b100000000
+{id_e}:
+  addi x2, x2, 0b1000000000
+  addi x4, {reg_src0}, 0
+  auipc x5, 0
+  addi x5, x5, 12
+  jal {reg_src0}, {id_f}
+  addi x2, x2, 0b10000000000
+{id_f}:
+  addi x2, x2, 0b100000000000
+  addi x6, {reg_src0}, 0
+  
+  sub x3, x3, x4
+  sub x5, x5, x6
+  csrw   proc2mngr, x2 > {ctrl_seq_val}
+  csrw   proc2mngr, x3 > 0
+  csrw   proc2mngr, x5 > 0
+  """.format(**locals())
+
+def gen_jalr_value_test (inst, imm):
+  return gen_jalr_random_template(inst=inst, imm=imm)
+
+
 #-------------------------------------------------------------------------
 # gen_br2_template
 #-------------------------------------------------------------------------

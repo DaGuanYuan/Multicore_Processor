@@ -51,7 +51,9 @@ import inst_sub
 def test_sub( name, test, dump_vcd ):
   run_test( ProcBaseRTL, test, dump_vcd )
 
-
+def test_sub_rand_delays( dump_vcd ):
+  run_test( ProcBaseRTL, inst_sub.gen_random_test, dump_vcd,
+            src_delay=3, sink_delay=5, mem_stall_prob=0.5, mem_latency=3 )
 
 # ''' LAB TASK '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 # random stall and delay
@@ -79,6 +81,10 @@ import inst_mul
 ])
 def test_mul( name, test, dump_vcd ):
   run_test( ProcBaseRTL, test, dump_vcd )
+
+def test_mul_rand_delays( dump_vcd ):
+  run_test( ProcBaseRTL, inst_mul.gen_random_test, dump_vcd,
+            src_delay=3, sink_delay=5, mem_stall_prob=0.5, mem_latency=3 )
 
 # ''' LAB TASK '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 # random stall and delay
@@ -175,6 +181,10 @@ import inst_slt
 def test_slt( name, test, dump_vcd ):
   run_test( ProcBaseRTL, test, dump_vcd )
 
+def test_slt_rand_delays( dump_vcd ):
+  run_test( ProcBaseRTL, inst_slt.gen_random_test, dump_vcd,
+            src_delay=3, sink_delay=5, mem_stall_prob=0.5, mem_latency=3 )
+
 # ''' LAB TASK '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 # random stall and delay
 # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -200,6 +210,10 @@ import inst_sltu
 ])
 def test_sltu( name, test, dump_vcd ):
   run_test( ProcBaseRTL, test, dump_vcd )
+
+def test_sltu_rand_delays( dump_vcd ):
+  run_test( ProcBaseRTL, inst_sltu.gen_random_test, dump_vcd,
+            src_delay=3, sink_delay=5, mem_stall_prob=0.5, mem_latency=3 )
 
 # ''' LAB TASK '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 # random stall and delay
@@ -227,6 +241,10 @@ import inst_sra
 def test_sra( name, test, dump_vcd ):
   run_test( ProcBaseRTL, test, dump_vcd )
 
+def test_sra_rand_delays( dump_vcd ):
+  run_test( ProcBaseRTL, inst_sra.gen_random_test, dump_vcd,
+            src_delay=3, sink_delay=5, mem_stall_prob=0.5, mem_latency=3 )
+
 # ''' LAB TASK '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 # random stall and delay
 # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -253,6 +271,10 @@ import inst_srl
 def test_srl( name, test, dump_vcd ):
   run_test( ProcBaseRTL, test, dump_vcd )
 
+def test_srl_rand_delays( dump_vcd ):
+  run_test( ProcBaseRTL, inst_srl.gen_random_test, dump_vcd,
+            src_delay=3, sink_delay=5, mem_stall_prob=0.5, mem_latency=3 )
+
 # ''' LAB TASK '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 # random stall and delay
 # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -278,6 +300,10 @@ import inst_sll
 ])
 def test_sll( name, test, dump_vcd ):
   run_test( ProcBaseRTL, test, dump_vcd )
+
+def test_sll_rand_delays( dump_vcd ):
+  run_test( ProcBaseRTL, inst_sll.gen_random_test, dump_vcd,
+            src_delay=3, sink_delay=5, mem_stall_prob=0.5, mem_latency=3 )
 
 # ''' LAB TASK '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 # random stall and delay

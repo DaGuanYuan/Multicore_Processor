@@ -52,23 +52,23 @@ def gen_basic_test():
 
 def gen_dest_dep_test():
   return [
-    gen_rimm_dest_dep_test( 5, "srai", 0x00000f0f, 0x01f, 0x00000000),
-    gen_rimm_dest_dep_test( 4, "srai", 0x0000f0f0, 0x010, 0x00000000),
-    gen_rimm_dest_dep_test( 3, "srai", 0x00000f0f, 0x000, 0x00000f0f),
-    gen_rimm_dest_dep_test( 2, "srai", 0x0000f0f0, 0x00f, 0x00000001),
-    gen_rimm_dest_dep_test( 1, "srai", 0x00000f0f, 0x01f, 0x00000000),
-    gen_rimm_dest_dep_test( 0, "srai", 0x0000f0f0, 0x010, 0x00000000),
+    gen_rimm_dest_dep_test( 5, "srai", 0x00000f0f, 0x01e, 0x00000000),
+    gen_rimm_dest_dep_test( 4, "srai", 0x0000f0f0, 0x01d, 0x00000000),
+    gen_rimm_dest_dep_test( 3, "srai", 0x00000f0f, 0x01d, 0x00000000),
+    gen_rimm_dest_dep_test( 2, "srai", 0x0000f0f0, 0x00c, 0x0000000f),
+    gen_rimm_dest_dep_test( 1, "srai", 0x00000f0f, 0x016, 0x00000000),
+    gen_rimm_dest_dep_test( 0, "srai", 0x0000f0f0, 0x019, 0x00000000),
   ]
 
 
 def gen_src_dep_test():
   return [
-    gen_rimm_src_dep_test( 5, "srai", 0x00000f0f, 0x01f, 0x00000000),
-    gen_rimm_src_dep_test( 4, "srai", 0x0000f0f0, 0x010, 0x00000000),
-    gen_rimm_src_dep_test( 3, "srai", 0x00000f0f, 0x000, 0x00000f0f),
-    gen_rimm_src_dep_test( 2, "srai", 0x0000f0f0, 0x00f, 0x00000001),
-    gen_rimm_src_dep_test( 1, "srai", 0x00000f0f, 0x01f, 0x00000000),
-    gen_rimm_src_dep_test( 0, "srai", 0x0000f0f0, 0x010, 0x00000000),
+    gen_rimm_src_dep_test( 5, "srai", 0x00000f0f, 0x011, 0x00000000),
+    gen_rimm_src_dep_test( 4, "srai", 0x0000f0f0, 0x018, 0x00000000),
+    gen_rimm_src_dep_test( 3, "srai", 0x00000f0f, 0x00f, 0x00000000),
+    gen_rimm_src_dep_test( 2, "srai", 0x0000f0f0, 0x001, 0x00007878),
+    gen_rimm_src_dep_test( 1, "srai", 0x00000f0f, 0x007, 0x0000001e),
+    gen_rimm_src_dep_test( 0, "srai", 0x0000f0f0, 0x00f, 0x00000001),
   ]
 
 
@@ -79,10 +79,10 @@ def gen_srcs_dest_test():
 
 def gen_value_test():
   return [
-    gen_rimm_value_test( "srai", 0xff00ff00, 0x00f, 0xfffffe01),
-    gen_rimm_value_test( "srai", 0x0ff00ff0, 0x010, 0x00000ff0),
-    gen_rimm_value_test( "srai", 0x00ff00ff, 0x01f, 0x00000000),
-    gen_rimm_value_test( "srai", 0xf00ff00f, 0x010, 0xfffff00f),
+    gen_rimm_value_test( "srai", 0xff00ff00, 0x000, 0xff00ff00),
+    gen_rimm_value_test( "srai", 0x0ff00ff0, 0x013, 0x000001fe),
+    gen_rimm_value_test( "srai", 0x00ff00ff, 0x01c, 0x00000000),
+    gen_rimm_value_test( "srai", 0xf00ff00f, 0x013, 0xfffffe01),
   ]
 
 def gen_random_test():

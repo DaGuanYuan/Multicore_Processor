@@ -13,8 +13,8 @@
 
 // Macro definition of the granularity of jumping over '0's
 //`define N_ZERO_TO_JUMP 2
-//`define N_ZERO_TO_JUMP 3
-`define N_ZERO_TO_JUMP 4
+`define N_ZERO_TO_JUMP 3
+//`define N_ZERO_TO_JUMP 4
 //`define N_ZERO_TO_JUMP 5
 //`define N_ZERO_TO_JUMP 6
 //`define N_ZERO_TO_JUMP 7

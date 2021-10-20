@@ -143,7 +143,7 @@ module vc_EqComparator
 endmodule
 
 //------------------------------------------------------------------------
-// LtComparator
+// LtUnsignedComparator
 //------------------------------------------------------------------------
 
 module vc_LtComparator
@@ -160,7 +160,41 @@ module vc_LtComparator
 endmodule
 
 //------------------------------------------------------------------------
-// GtComparator
+// LtSignedComparator
+//------------------------------------------------------------------------
+
+module vc_LtSignedComparator
+#(
+  parameter p_nbits = 1
+)(
+  input  logic [p_nbits-1:0] in0,
+  input  logic [p_nbits-1:0] in1,
+  output logic               out
+);
+
+  assign out = ( $signed(in0) < $signed(in1) );
+
+endmodule
+
+//------------------------------------------------------------------------
+// GtSignedComparator
+//------------------------------------------------------------------------
+
+module vc_GtSignedComparator
+#(
+  parameter p_nbits = 1
+)(
+  input  logic [p_nbits-1:0] in0,
+  input  logic [p_nbits-1:0] in1,
+  output logic               out
+);
+
+  assign out = ( $signed(in0) > $signed(in1) );
+
+endmodule
+
+//------------------------------------------------------------------------
+// GtUnsignedComparator
 //------------------------------------------------------------------------
 
 module vc_GtComparator
