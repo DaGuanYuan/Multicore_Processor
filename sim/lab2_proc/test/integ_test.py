@@ -59,6 +59,7 @@ def gen_integ_test_mz588():
     .word 0x00000000
   """
 
+# the example program in class
 def gen_integ_test_estimating_execution_time():
   return """
 
@@ -107,6 +108,7 @@ def gen_integ_test_estimating_execution_time():
     .word 0x00000001
   """
 
+# raw data hazards using 3 registers
 def gen_integ_test_3_regs_raw_data_hazards():
   return """
     csrr x1, mngr2proc < 0
@@ -128,6 +130,7 @@ def gen_integ_test_3_regs_raw_data_hazards():
     
   """
 
+# raw data hazards using 2 registers
 def gen_integ_test_2_regs_raw_data_hazards():
   return """
     csrr x1, mngr2proc < 0
@@ -147,6 +150,7 @@ def gen_integ_test_2_regs_raw_data_hazards():
     
   """
 
+# branch followed by jump, test for priority
 def gen_integ_test_branch_over_jumps():
   return """
     csrr  x1, mngr2proc < 1
