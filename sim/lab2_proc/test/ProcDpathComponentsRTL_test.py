@@ -177,11 +177,11 @@ def test_alu_cp_op1( dump_vcd, test_verilog ):
 def test_alu_fn_equality( dump_vcd, test_verilog ):
   run_test_vector_sim( AluRTL(), [
     ('in0           in1           fn  out*          ops_eq*   ops_lt*  ops_ltu*'),
-    [ 0x00000000,   0x00000000,  14,  0x00000000,   1,         '?',       '?'     ],
-    [ 0x0ffaa660,   0x00012304,  14,  0x00000000,   0,         '?',       '?'     ],
-    [ 0x00132050,   0xd6620040,  14,  0x00000000,   0,         '?',       '?'     ],
-    [ 0xfff0a440,   0x00004450,  14,  0x00000000,   0,         '?',       '?'     ],
-    [ 0xfeeeeaa3,   0xf4650000,  14,  0x00000000,   0,         '?',       '?'     ],
+    [ 0x00000000,   0x00000000,  14,  0x00000000,   1,        '?',       '?'      ],
+    [ 0x0ffaa660,   0x00012304,  14,  0x00000000,   0,        '?',       '?'      ],
+    [ 0x00132050,   0xd6620040,  14,  0x00000000,   0,        '?',       '?'      ],
+    [ 0xfff0a440,   0x00004450,  14,  0x00000000,   0,        '?',       '?'      ],
+    [ 0xfeeeeaa3,   0xf4650000,  14,  0x00000000,   0,        '?',       '?'      ],
   ], dump_vcd, test_verilog )
 
 def test_alu_fn_lessThanUnsigned( dump_vcd, test_verilog ):

@@ -424,6 +424,10 @@ module lab2_proc_ProcBaseVRTL
     end else
       vc_trace.append_str( trace_str, { 3896'b0, rv2isa.disasm( ctrl.inst_D ) } );
 
+    // $sformat( str, " %x, ", ctrl.ostall_mngr2proc_D );
+    // vc_trace.append_str( trace_str,  " ostall_mngr2proc_D: " );
+    // vc_trace.append_str( trace_str,  str );
+
     // $sformat( str, " %x, ", ctrl.ostall_hazard_D );
     // vc_trace.append_str( trace_str,  " ostall_hazard_D: " );
     // vc_trace.append_str( trace_str,  str );
