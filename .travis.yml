@@ -50,4 +50,5 @@ before_script:
 #------------------------------------------------------------------------
 
 script:
- - py.test --verbose ../lab2_proc
+ - py.test --verbose ../lab3_mem
+
