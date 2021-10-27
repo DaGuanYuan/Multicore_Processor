@@ -15,7 +15,7 @@ and pushing your changes back to GitHub, or by using the following link:
 Please update the following list of group members, including the NetIDs
 for each group member.
 
- * Zehua Pan (NetID)
+ * Zehua Pan (zp74)
  * Yue Zhao (NetID)
  * Yibo Yang (yy796)
 
