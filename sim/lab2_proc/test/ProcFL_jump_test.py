@@ -44,6 +44,7 @@ import inst_jalr
   asm_test( inst_jalr.gen_basic_test    ),
   asm_test( inst_jalr.gen_one_jump_test ),
   asm_test( inst_jalr.gen_seq_test),
+  asm_test( inst_jalr.gen_lsb_test),
   # ''' LAB TASK '''''''''''''''''''''''''''''''''''''''''''''''''''''''''
   # Add more rows to the test case table to test more complicated
   # scenarios.

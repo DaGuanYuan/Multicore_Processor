@@ -103,6 +103,9 @@ module lab2_proc_ProcAltDpathVRTL
   logic [31:0] br_target_X;
   logic [31:0] jal_target_D;
   logic [31:0] jalr_target_D;
+  logic [31:0] jalr_target_LSB_D;
+
+  assign jalr_target_LSB_D = jalr_target_D & 32'hfffffffe;
 
   vc_EnResetReg #(32, c_reset_vector - 32'd4) pc_reg_F
   (
@@ -124,7 +127,7 @@ module lab2_proc_ProcAltDpathVRTL
     .in0  (pc_plus4_F),
     .in1  (br_target_X),
     .in2  (jal_target_D),
-    .in3  (jalr_target_D),
+    .in3  (jalr_target_LSB_D),
     .sel  (pc_sel_F),
     .out  (pc_next_F)
   );

@@ -705,6 +705,38 @@ def gen_jalr_simple_test():
   return gen_jalr_simple_template()
 
 #-------------------------------------------------------------------------
+# gen_simple_lsb_template
+#-------------------------------------------------------------------------
+# Template for simple instructions with no source.
+gen_jalr_lsb_template_id = 0
+def gen_jalr_lsb_template(
+  inst="jalr", reg_src0="x1", reg_src1="x2", jmp_lines = 0
+):
+
+  global gen_jalr_lsb_template_id
+  id_a = "label_{}".format( gen_jalr_lsb_template_id + 1 )
+  gen_jalr_lsb_template_id += 1
+
+  return """
+  lui  {reg_src1},     %hi[{id_a}]
+  addi {reg_src1}, {reg_src1}, %lo[{id_a}]
+  addi x3, x0, 0
+  auipc x4, 0
+  addi x4, x4, 12
+  {inst} {reg_src0}, {reg_src1}, {jmp_lines}
+  addi x3, x3, 0b0001
+{id_a}:
+  addi x3, x3, 0b0010
+  sub {reg_src0}, {reg_src0}, x4
+  csrw proc2mngr, x3 > 0b0010
+  csrw proc2mngr, {reg_src0} > 0
+    
+  """.format(**locals())
+
+def gen_jalr_lsb_test(inst, jmp_lines):
+  return gen_jalr_lsb_template(inst = inst, jmp_lines=jmp_lines)
+
+#-------------------------------------------------------------------------
 # gen_jump_back_template
 #-------------------------------------------------------------------------
 # Template for jump instructions.

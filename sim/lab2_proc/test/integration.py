@@ -409,3 +409,22 @@ def gen_integ_test_branch_over_jumps():
     csrw  proc2mngr, x2 > 0x10
     
   """
+
+def temp_test():
+  return """
+    csrr  x1, mngr2proc < 1     # 0x200
+    csrr  x2, mngr2proc < 0     # 0x204
+    csrr  x3, mngr2proc < 0x224 # 0x208
+    jalr  x1, x3, 1             # 0x20c
+    bne   x1, x0, F1            # 0x210
+    nop                         # 0x214
+    nop                         # 0x218
+    nop                         # 0x21c
+  F2:
+    addi  x2, x2, 0x01          # 0x220
+  F1:
+    addi  x2, x2, 0x10          # 0x224
+    csrw  proc2mngr, x1 > 0x210 # 0x228
+    csrw  proc2mngr, x2 > 0x10  # 0x023c
+    
+  """

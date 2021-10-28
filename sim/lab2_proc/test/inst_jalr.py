@@ -55,6 +55,12 @@ def gen_basic_test():
 # ''' LAB TASK ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 # Define additional directed and random test cases.
 # '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+def gen_lsb_test():
+  return [
+    gen_jalr_lsb_test("jalr", 0),
+    gen_jalr_lsb_test("jalr", 1),
+  ]
+
 
 def gen_one_jump_test():
   return [

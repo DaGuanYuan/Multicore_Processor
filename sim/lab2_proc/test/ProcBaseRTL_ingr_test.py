@@ -20,6 +20,7 @@ import integration
   asm_test( integration.gen_integ_test_3_regs_raw_data_hazards    ) ,
   asm_test( integration.gen_integ_test_2_regs_raw_data_hazards    ) ,
   asm_test( integration.gen_integ_test_branch_over_jumps    ) ,
+  asm_test( integration.temp_test)
 ])
 
 def test_ingr( name, test, dump_vcd ):
