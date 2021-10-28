@@ -1,4 +1,4 @@
-#=========================================================================
+  #=========================================================================
 # ProcFL_alu_test.py
 #=========================================================================
 
@@ -60,7 +60,6 @@ import inst_mul
 
 @pytest.mark.parametrize( "name,test", [
   asm_test( inst_mul.gen_basic_test     ) ,
-<<<<<<< c0f926625ba7a47f1b297dd6d5ad55bbc3d48661
   asm_test( inst_mul.gen_dest_dep_test  ) ,
   asm_test( inst_mul.gen_src0_dep_test  ) ,
   asm_test( inst_mul.gen_src1_dep_test  ) ,
@@ -68,15 +67,6 @@ import inst_mul
   asm_test( inst_mul.gen_srcs_dest_test ) ,
   asm_test( inst_mul.gen_value_test     ) ,
   asm_test( inst_mul.gen_random_test    ) ,
-=======
-  asm_test( inst_sub.gen_dest_dep_test  ) ,
-  asm_test( inst_sub.gen_src0_dep_test  ) ,
-  asm_test( inst_sub.gen_src1_dep_test  ) ,
-  asm_test( inst_sub.gen_srcs_dep_test  ) ,
-  asm_test( inst_sub.gen_srcs_dest_test ) ,
-  asm_test( inst_sub.gen_value_test     ) ,
-  asm_test( inst_sub.gen_random_test    ) ,
->>>>>>> Pull test case from Zehua
 
   # ''' LAB TASK '''''''''''''''''''''''''''''''''''''''''''''''''''''''''
   # Add more rows to the test case table to test more complicated
