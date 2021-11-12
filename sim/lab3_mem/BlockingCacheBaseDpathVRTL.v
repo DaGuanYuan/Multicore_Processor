@@ -6,6 +6,10 @@
 `define LAB3_MEM_BLOCKING_CACHE_BASE_DPATH_V
 
 `include "vc/mem-msgs.v"
+`include "vc/muxes.v"
+`include "vc/arithmetic.v"
+`include "vc/srams.v"
+`include "vc/regs.v"
 
 //''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 // LAB TASK: Include necessary files
@@ -38,6 +42,40 @@ module lab3_mem_BlockingCacheBaseDpathVRTL
   //''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
   // LAB TASK: Define additional ports
   //''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+  // Control Signals (ctrl -> datapath)
+
+  // Tag Array Control Signals
+
+  input  logic                        cachereq_en,
+  input  logic                        tag_array_ren,
+  input  logic                        tag_array_wen,
+  input  logic                        evict_addr_reg_en,
+  input  logic                        memreq_addr_mux_sel,
+
+  // Data Array Control Signals
+
+  input  logic                        memresp_en,
+  input  logic                        write_data_mux_sel,
+  input  logic                        data_array_ren,
+  input  logic                        data_array_wen,
+  input  logic [15:0]                 data_array_wben,
+  input  logic                        read_data_reg_en,
+  input  logic [2:0]                  read_word_mux_sel,
+
+  // Output Control Signals
+
+  input  logic [2:0]                  cacheresp_type,
+  input  logic [2:0]                  memreq_type,
+  input  logic [1:0]                  hit,
+  input                               val,
+
+  // Status Signals (datapath -> ctrl)
+
+  output logic [2:0]                  cachereq_type,                 
+  output logic [31:0]                 cachereq_addr,                 
+  output logic                        tag_match               
+
 );
 
   // local parameters not meant to be set from outside
@@ -59,6 +97,195 @@ module lab3_mem_BlockingCacheBaseDpathVRTL
 //''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 // LAB TASK: Implement data-path
 //''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+
+//--------------------------------------------------------------------
+// Data Path Through "Tag" Array
+//--------------------------------------------------------------------
+  logic [2:0]  cachereq_msg_type;
+  logic [7:0]  cachereq_msg_opaque;
+  logic [31:0] cachereq_msg_addr;
+  logic [31:0] cachereq_msg_data;
+  logic [7:0]  cachereq_opaque;
+  logic [31:0] cachereq_data;
+  assign cachereq_msg_type   = cachereq_msg.type_;
+  assign cachereq_msg_opaque = cachereq_msg.opaque;
+  assign cachereq_msg_addr   = cachereq_msg.addr;
+  assign cachereq_msg_data   = cachereq_msg.data;
+
+  vc_EnResetReg #(8) cachereq_opaque_reg
+  (
+    .clk    (clk),
+    .reset  (reset),
+    .en     (cachereq_en),
+    .d      (cachereq_msg_opaque),
+    .q      (cachereq_opaque)
+  );
+
+  vc_EnResetReg #(3) cachereq_type_reg
+  (
+    .clk    (clk),
+    .reset  (reset),
+    .en     (cachereq_en),
+    .d      (cachereq_msg_type),
+    .q      (cachereq_type)
+  );
+
+  vc_EnResetReg #(32) cachereq_addr_reg
+  (
+    .clk    (clk),
+    .reset  (reset),
+    .en     (cachereq_en),
+    .d      (cachereq_msg_addr),
+    .q      (cachereq_addr)
+  );
+
+  vc_EnResetReg #(32) cachereq_data_reg
+  (
+    .clk    (clk),
+    .reset  (reset),
+    .en     (cachereq_en),
+    .d      (cachereq_msg_data),
+    .q      (cachereq_data)
+  );
+
+  logic [3:0]  idx;
+  logic [27:0] tag;
+  logic [27:0] read_tag;  // read_data output for tag array 
+  logic        compare_rst;
+  assign idx  = cachereq_addr[p_idx_shamt + 7: p_idx_shamt + 4];
+  assign tag  = cachereq_addr[31:4];
+
+  // Tag Array
+
+  vc_CombinationalBitSRAM_1rw #(28,16) tag_array
+  (
+    .clk            (clk),
+    .reset          (reset),
+    .read_en        (tag_array_ren),
+    .read_addr      (idx),
+    .read_data      (read_tag),
+    .write_en       (tag_array_wen),
+    .write_addr     (idx),
+    .write_data     (tag)
+  );
+
+  vc_EqComparator #(28) comparator
+  (
+    .in0            (tag),
+    .in1            (read_tag),
+    .out            (compare_rst)
+  );
+  
+  assign tag_match = compare_rst && val;
+
+  logic [31:0] tag_mkaddr;  // {tag, 4'b0000}
+  logic [31:0] read_tag_mkaddr; // {read_tag, 4'b0000}
+  logic [31:0] evict_addr;  // output for evict_addr_reg
+  logic [31:0] memreq_addr;
+  assign tag_mkaddr       = {tag, 4'b0000};
+  assign read_tag_mkaddr  = {read_tag, 4'b0000};
+
+  vc_EnResetReg #(32) evict_addr_reg
+  (
+    .clk    (clk),
+    .reset  (reset),
+    .en     (evict_addr_reg_en),
+    .d      (read_tag_mkaddr),
+    .q      (evict_addr)
+  );
+
+  vc_Mux2 #(32) memreq_addr_mux
+  (
+    .in0    (evict_addr),
+    .in1    (tag_mkaddr),
+    .sel    (memreq_addr_mux_sel),
+    .out    (memreq_addr)
+  );
+
+//--------------------------------------------------------------------
+// Data Path Through Data Array
+//--------------------------------------------------------------------
+
+  logic [127:0] memresp_msg_data;
+  logic [127:0] memresp_data; // signal after memresp_data_reg
+  assign memresp_msg_data = memresp_msg.data;  
+
+  vc_EnResetReg #(128) memresp_data_reg
+  (
+    .clk    (clk),
+    .reset  (reset),
+    .en     (memresp_en),
+    .d      (memresp_msg_data),
+    .q      (memresp_data)
+  );
+
+  logic [127:0] cachereq_data_replicated;
+  logic [127:0] write_data; // signal after write_data_mux_sel
+  assign cachereq_data_replicated = {4{cachereq_data}};
+
+  vc_Mux2 #(128) write_data_mux
+  (
+    .in0    (cachereq_data_replicated),
+    .in1    (memresp_data),
+    .sel    (write_data_mux_sel),
+    .out    (write_data)
+  );
+
+  // Data Array
+
+  logic [clw-1:0] read_data_from_data_array; // read_data output for data array
+  logic [clw-1:0] read_data; // output for read_data_reg
+
+  vc_CombinationalSRAM_1rw #(128, 16) data_array
+  (
+    .clk            (clk),
+    .reset          (reset),
+    .read_en        (data_array_ren),
+    .read_addr      (idx),
+    .read_data      (read_data_from_data_array),
+    .write_en       (data_array_wen),
+    .write_byte_en  (data_array_wben),
+    .write_addr     (idx),
+    .write_data     (write_data)    
+  );
+
+  vc_EnResetReg #(128) read_data_reg
+  (
+    .clk    (clk),
+    .reset  (reset),
+    .en     (read_data_reg_en),
+    .d      (read_data_from_data_array),
+    .q      (read_data)
+  );
+
+  logic [31:0] cacheresp_data;
+
+  vc_Mux5 #(32) read_word_mux
+  (
+    .in0    (0),
+    .in1    (read_data[31:0]),
+    .in2    (read_data[63:32]),
+    .in3    (read_data[95:64]),
+    .in4    (read_data[127:96]),
+    .sel    (read_word_mux_sel),
+    .out    (cacheresp_data)
+  );
+
+//--------------------------------------------------------------------
+// Output of the Cache
+//--------------------------------------------------------------------
+
+  assign cacheresp_msg.opaque = cachereq_opaque; 
+  assign cacheresp_msg.type_  = cacheresp_type;
+  assign cacheresp_msg.len    = 2'b0;
+  assign cacheresp_msg.test   = hit;
+  assign cacheresp_msg.data   = cacheresp_data;
+
+  assign memreq_msg.type_     = memreq_type;
+  assign memreq_msg.len       = 4'd0;
+  assign memreq_msg.addr      = memreq_addr;
+  assign memreq_msg.data      = read_data;
+  assign memreq_msg.opaque    = 8'b0;
 
 endmodule
 
