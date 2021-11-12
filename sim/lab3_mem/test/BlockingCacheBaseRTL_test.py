@@ -19,6 +19,7 @@ from pclib.ifcs import MemMsg16B, MemReqMsg16B, MemRespMsg16B
 
 from TestCacheSink        import TestCacheSink
 from BlockingCacheFL_test import test_case_table_generic
+from BlockingCacheFL_test import test_case_table_generic_with_delays
 from BlockingCacheFL_test import test_case_table_dir_mapped
 from BlockingCacheFL_test import TestHarness
 
@@ -55,6 +56,27 @@ def test_generic( test_params, dump_vcd ):
                          test_params.src, test_params.sink,
                          BlockingCacheBaseRTL, test_params.nbank,
                          True, dump_vcd )
+  # Load memory before the test
+  if test_params.mem_data_func != None:
+    harness.load( mem[::2], mem[1::2] )
+  # Run the test
+  run_sim( harness, dump_vcd )
+
+#-------------------------------------------------------------------------
+# Generic tests with delays
+#-------------------------------------------------------------------------
+
+@pytest.mark.parametrize( **test_case_table_generic_with_delays )
+def test_generic_with_delays( test_params, dump_vcd ):
+  msgs = test_params.msg_func( 0 )
+  if test_params.mem_data_func != None:
+    mem = test_params.mem_data_func( 0 )
+  # Instantiate testharness
+  harness = TestHarness( msgs[::2], msgs[1::2],
+                         test_params.stall, test_params.lat,
+                         test_params.src, test_params.sink,
+                         BlockingCacheBaseRTL, test_params.nbank,
+                         False, dump_vcd )
   # Load memory before the test
   if test_params.mem_data_func != None:
     harness.load( mem[::2], mem[1::2] )
