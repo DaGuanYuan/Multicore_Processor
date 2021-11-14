@@ -647,7 +647,6 @@ def W4Bank_4WM_4RM_dmap( base_addr ):
 test_case_table_generic = mk_test_case_table([
   (                         "msg_func               mem_data_func         nbank stall lat src sink"),
   [ "read_hit_1word_clean",  read_hit_1word_clean,  None,                 0,    0.0,  0,  0,  0    ],
-  # [ "read_hit_2word_clean",  read_hit_2word_clean,  None,                 0,    0.0,  0,  0,  0    ],
   [ "write_hit_1word_clean", write_hit_1word_clean, None,                 0,    0.0,  0,  0,  0    ],
   [ "write_hit_2word_clean", write_hit_2word_clean, None,                 0,    0.0,  0,  0,  0    ],
   [ "read_hit_1word_dirty",  read_hit_1word_dirty,  None,                 0,    0.0,  0,  0,  0    ],
@@ -659,7 +658,6 @@ test_case_table_generic = mk_test_case_table([
   [ "entire_cache_read",     entire_cache_read_msg, entire_cache_read_mem,0,    0.0,  0,  0,  0    ],
   [ "conflict_misses",       conflict_misses_msg,   conflict_misses_mem,  0,    0.0,  0,  0,  0    ],
   [ "capacity_misses",       capacity_misses_msg,   capacity_misses_mem,  0,    0.0,  0,  0,  0    ],
-  # [ "LRU",                   LRU_msg,               LRU_mem,              0,    0.0,  0,  0,  0    ],
   [ "read_hit_1word_4bank",  read_hit_1word_clean,  None,                 4,    0.0,  0,  0,  0    ],
 
   #'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -690,22 +688,20 @@ def test_generic( test_params, dump_vcd ):
 #-------------------------------------------------------------------------
 
 test_case_table_generic_with_delays = mk_test_case_table([
-  (                         "msg_func               mem_data_func         nbank stall lat src sink"),
-  [ "read_hit_1word_clean",  read_hit_1word_clean,  None,                 0,    0.5,  1,  6,  7    ],
-  # [ "read_hit_2word_clean",  read_hit_2word_clean,  None,                 0,    0.0,  2,  5,  8    ],
-  [ "write_hit_1word_clean", write_hit_1word_clean, None,                 0,    0.6,  3,  4,  9    ],
-  [ "write_hit_2word_clean", write_hit_2word_clean, None,                 0,    0.7,  4,  3,  1    ],
-  [ "read_hit_1word_dirty",  read_hit_1word_dirty,  None,                 0,    0.8,  5,  2,  2    ],
-  [ "write_hit_1word_dirty", write_hit_1word_dirty, None,                 0,    0.9,  6,  1,  3    ],
-  [ "read_miss_1word",       read_miss_1word_msg,   read_miss_1word_mem,  0,    0.1,  7,  9,  4    ],
-  [ "write_miss_1word",      write_miss_1word_msg,  write_miss_1word_mem, 0,    0.2,  8,  8,  5    ],
-  [ "read_miss_evict",       read_miss_evict_msg,   read_miss_evict_mem,  0,    0.3,  9,  7,  6    ],
-  [ "write_miss_evict",      write_miss_evict_msg,  write_miss_evict_mem, 0,    0.4,  1,  6,  7    ],
-  [ "entire_cache_read",     entire_cache_read_msg, entire_cache_read_mem,0,    0.5,  2,  5,  8    ],
-  [ "conflict_misses",       conflict_misses_msg,   conflict_misses_mem,  0,    0.6,  3,  4,  9    ],
-  [ "capacity_misses",       capacity_misses_msg,   capacity_misses_mem,  0,    0.7,  4,  3,  1    ],
-  # [ "LRU",                   LRU_msg,               LRU_mem,              0,    0.8,  5,  2,  2    ],
-  [ "read_hit_1word_4bank",  read_hit_1word_clean,  None,                 4,    0.9,  6,  1,  3    ],
+  (                         "msg_func               mem_data_func         nbank stall            lat                   src                   sink                "),
+  [ "read_hit_1word_clean",  read_hit_1word_clean,  None,                 0,    random.random(), random.randint(0,10), random.randint(0,10), random.randint(0,10) ],
+  [ "write_hit_1word_clean", write_hit_1word_clean, None,                 0,    random.random(), random.randint(0,10), random.randint(0,10), random.randint(0,10) ],
+  [ "write_hit_2word_clean", write_hit_2word_clean, None,                 0,    random.random(), random.randint(0,10), random.randint(0,10), random.randint(0,10) ],
+  [ "read_hit_1word_dirty",  read_hit_1word_dirty,  None,                 0,    random.random(), random.randint(0,10), random.randint(0,10), random.randint(0,10) ],
+  [ "write_hit_1word_dirty", write_hit_1word_dirty, None,                 0,    random.random(), random.randint(0,10), random.randint(0,10), random.randint(0,10) ],
+  [ "read_miss_1word",       read_miss_1word_msg,   read_miss_1word_mem,  0,    random.random(), random.randint(0,10), random.randint(0,10), random.randint(0,10) ],
+  [ "write_miss_1word",      write_miss_1word_msg,  write_miss_1word_mem, 0,    random.random(), random.randint(0,10), random.randint(0,10), random.randint(0,10) ],
+  [ "read_miss_evict",       read_miss_evict_msg,   read_miss_evict_mem,  0,    random.random(), random.randint(0,10), random.randint(0,10), random.randint(0,10) ],
+  [ "write_miss_evict",      write_miss_evict_msg,  write_miss_evict_mem, 0,    random.random(), random.randint(0,10), random.randint(0,10), random.randint(0,10) ],
+  [ "entire_cache_read",     entire_cache_read_msg, entire_cache_read_mem,0,    random.random(), random.randint(0,10), random.randint(0,10), random.randint(0,10) ],
+  [ "conflict_misses",       conflict_misses_msg,   conflict_misses_mem,  0,    random.random(), random.randint(0,10), random.randint(0,10), random.randint(0,10) ],
+  [ "capacity_misses",       capacity_misses_msg,   capacity_misses_mem,  0,    random.random(), random.randint(0,10), random.randint(0,10), random.randint(0,10) ],
+  [ "read_hit_1word_4bank",  read_hit_1word_clean,  None,                 4,    random.random(), random.randint(0,10), random.randint(0,10), random.randint(0,10) ],
 
   #'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
   # LAB TASK: Add test cases to this table
@@ -715,6 +711,120 @@ test_case_table_generic_with_delays = mk_test_case_table([
 
 @pytest.mark.parametrize( **test_case_table_generic_with_delays )
 def test_generic_with_delays( test_params, dump_vcd ):
+  msgs = test_params.msg_func( 0 )
+  if test_params.mem_data_func != None:
+    mem = test_params.mem_data_func( 0 )
+  # Instantiate testharness
+  harness = TestHarness( msgs[::2], msgs[1::2],
+                         test_params.stall, test_params.lat,
+                         test_params.src, test_params.sink,
+                         BlockingCacheFL, test_params.nbank,
+                         False, dump_vcd )
+  # Load memory before the test
+  if test_params.mem_data_func != None:
+    harness.load( mem[::2], mem[1::2] )
+  # Run the test
+  run_sim( harness, dump_vcd )
+
+#-------------------------------------------------------------------------
+# Random tests
+#-------------------------------------------------------------------------
+# 1.Simple address patterns, single request type, with random data
+# 2.Simple address patterns, random request type and data
+# 3.Random address patterns, request types, and data
+# 4.Unit stride with random data
+# 5.Stride with random data
+# 6.Unit stride (high spatial locality) mixed with shared (high temporal locality)
+
+def mk_req( type_, addr, len_, data ):
+  # print('\n'+'req( '+type_+', 0, '+str(addr)+', '+str(len_)+', '+str(data)+' )')
+  #           type    opq addr  len   data
+  return req( type_,  0,  addr, len_, data )
+
+def mk_resp( type_, len_, data ):
+  # print('\n'+'resq( '+type_+', 0, 0, '+str(len_)+', '+str(data)+' )')
+  #            type   opq test  len   data
+  return resp( type_, 0,  0,    len_, data )
+
+#-------------------------------------------------------------------
+# 1.Simple address patterns, single request type, with random data
+#-------------------------------------------------------------------
+class random_tests_1():
+  def __init__(self, req_type):
+    self.rand_msg  = []
+    self.mem_data  = []
+    addr_1 = 0
+    Num_of_Rand_Tests_1 = 100
+    for i in xrange( Num_of_Rand_Tests_1 ):
+      addr_1 = i*16
+      data_1 = random.randint(0,2147483647)
+      if ( req_type is 'rd' ):
+        self.rand_msg.append( mk_req ( 'rd', addr_1, 0, 0      ) )
+        self.rand_msg.append( mk_resp( 'rd', 0,      data_1    ) )
+      elif ( req_type is 'wr' ):
+        self.rand_msg.append( mk_req ( 'wr', addr_1, 0, data_1 ) )
+        self.rand_msg.append( mk_resp( 'wr', 0,      0         ) )
+      self.mem_data.append( addr_1 )
+      self.mem_data.append( data_1 )
+
+  def rand_1_msg(self, base_addr):
+    return self.rand_msg
+
+  def rand_1_mem(self, base_addr):
+    return self.mem_data
+  
+random_1_rd = random_tests_1('rd')
+random_1_wr = random_tests_1('wr')
+
+# print('\n\nHello\n\n')
+# print(random_1_rd.rand_1_msg())
+# print(random_1_rd.rand_1_mem())
+# print(random_1_wr.rand_1_msg())
+# print(random_1_wr.rand_1_mem())
+# print('\n\nHello\n\n')
+
+#-------------------------------------------------------------------
+# 2.Simple address patterns, random request type and data
+#-------------------------------------------------------------------
+class random_tests_2():
+  def __init__(self):
+    self.rand_msg  = []
+    self.mem_data  = []
+    addr_2 = 0
+    Num_of_Rand_Tests_2 = 10
+    for i in xrange( Num_of_Rand_Tests_2 ):
+      addr_2 = i*8
+      data_2 = random.randint(0,2147483647)
+      if ( random.randint(0,1) is 1 ):
+        self.rand_msg.append( mk_req ( 'rd', addr_2, 0, 0      ) )
+        self.rand_msg.append( mk_resp( 'rd', 0,      data_2    ) )
+      else:
+        self.rand_msg.append( mk_req ( 'wr', addr_2, 0, data_2 ) )
+        self.rand_msg.append( mk_resp( 'wr', 0,      0         ) )
+      self.mem_data.append( addr_2 )
+      self.mem_data.append( data_2 )
+
+  def rand_2_msg(self, base_addr):
+    return self.rand_msg
+
+  def rand_2_mem(self, base_addr):
+    return self.mem_data
+  
+random_2 = random_tests_2()
+
+#-------------------------------------------------------------------------
+# Test table for random test
+#-------------------------------------------------------------------------
+
+test_case_table_random = mk_test_case_table([
+  (                         "msg_func                   mem_data_func               nbank stall lat src sink"),
+  [ "random_test_1_read",    random_1_rd.rand_1_msg,    random_1_rd.rand_1_mem,     0,    0.0,  0,  0,  0    ],
+  [ "random_test_1_write",   random_1_wr.rand_1_msg,    random_1_wr.rand_1_mem,     0,    0.0,  0,  0,  0    ],
+  [ "random_test_2",         random_2.rand_2_msg,       random_2.rand_2_mem,        0,    0.0,  0,  0,  0    ],
+])
+
+@pytest.mark.parametrize( **test_case_table_random )
+def test_random( test_params, dump_vcd ):
   msgs = test_params.msg_func( 0 )
   if test_params.mem_data_func != None:
     mem = test_params.mem_data_func( 0 )
