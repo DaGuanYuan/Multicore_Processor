@@ -20,7 +20,7 @@ from pclib.ifcs import MemMsg16B, MemReqMsg16B, MemRespMsg16B
 from TestCacheSink        import TestCacheSink
 from BlockingCacheFL_test import test_case_table_generic
 from BlockingCacheFL_test import test_case_table_generic_with_delays
-from BlockingCacheFL_test import test_case_table_random
+from BlockingCacheFL_test import test_case_table_dmap_random
 from BlockingCacheFL_test import test_case_table_dir_mapped
 from BlockingCacheFL_test import TestHarness
 
@@ -88,7 +88,7 @@ def test_generic_with_delays( test_params, dump_vcd ):
 # Random tests
 #-------------------------------------------------------------------------
 
-@pytest.mark.parametrize( **test_case_table_random )
+@pytest.mark.parametrize( **test_case_table_dmap_random )
 def test_random( test_params, dump_vcd ):
   msgs = test_params.msg_func( 0 )
   if test_params.mem_data_func != None:

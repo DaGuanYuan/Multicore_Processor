@@ -8,6 +8,7 @@ import pytest
 import random
 import struct
 import math
+import copy
 
 random.seed(0xa4e28cc2)
 
@@ -128,17 +129,6 @@ def read_hit_1word_clean( base_addr ):
     req( 'in', 0x0, base_addr, 0, 0xdeadbeef ), resp( 'in', 0x0, 0,   0,  0          ),
     req( 'rd', 0x1, base_addr, 0, 0          ), resp( 'rd', 0x1, 1,   0,  0xdeadbeef ),
   ]
-
-# Only one init transcation at the beginning
-# def read_hit_2word_clean( base_addr ):
-#   return [
-#     #    type  opq  addr       len data                type  opq  test len data
-#     req( 'in', 0x0, 0x00000000, 0, 0xdeadbeef ), resp( 'in', 0x0, 0,   0,  0          ),
-    
-#     req( 'in', 0x2, 0x00001000, 0, 0x00c0ffee ), resp( 'in', 0x2, 0,   0,  0          ),
-#     req( 'rd', 0x1, 0x00000000, 0, 0          ), resp( 'rd', 0x1, 0,   0,  0x00000000 ),
-#     req( 'rd', 0x3, 0x00001000, 0, 0          ), resp( 'rd', 0x3, 0,   0,  0x00c0ffee ),
-#   ]
 
 #----------------------------------------------------------------------
 # Test Case: read hit path -- for set-associative cache
@@ -264,13 +254,23 @@ def write_miss_1word_mem( base_addr ):
 # Test Case: read miss path with refill and eviction
 #-------------------------------------------------------------------------
 
-def read_miss_evict_msg( base_addr ):
+def read_miss_evict_dmap_msg( base_addr ):
   return [
     #    type  opq   addr      len  data               type  opq test  len data
     req( 'wr', 0x00, 0x00000000, 0, 0x3b3b3b3b ), resp('wr', 0x00, 0,   0, 0          ), # write word 0x00000000   set dirty bit
     req( 'rd', 0x01, 0x00000100, 0, 0          ), resp('rd', 0x01, 0,   0, 0xa5a5a5a5 ), # read word  0x00000100   evict first and then refill
     req( 'rd', 0x02, 0x00000104, 0, 0          ), resp('rd', 0x02, 1,   0, 0xf1f1f1f1 ), # read word  0x00000104   check cache line brought back from memory
     req( 'rd', 0x03, 0x00000000, 0, 0          ), resp('rd', 0x03, 0,   0, 0x3b3b3b3b ), # read word  0x00000000   check cache line brought back from memory
+    req( 'rd', 0x04, 0x00000004, 0, 0          ), resp('rd', 0x04, 1,   0, 0x00c0ffee ), # read word  0x00000004   check cache line brought back from memory
+  ]
+
+def read_miss_evict_asso_msg( base_addr ):
+  return [
+    #    type  opq   addr      len  data               type  opq test  len data
+    req( 'wr', 0x00, 0x00000000, 0, 0x3b3b3b3b ), resp('wr', 0x00, 0,   0, 0          ), # write word 0x00000000   set dirty bit
+    req( 'rd', 0x01, 0x00000100, 0, 0          ), resp('rd', 0x01, 0,   0, 0xa5a5a5a5 ), # read word  0x00000100   evict first and then refill
+    req( 'rd', 0x02, 0x00000104, 0, 0          ), resp('rd', 0x02, 1,   0, 0xf1f1f1f1 ), # read word  0x00000104   check cache line brought back from memory
+    req( 'rd', 0x03, 0x00000000, 0, 0          ), resp('rd', 0x03, 1,   0, 0x3b3b3b3b ), # read word  0x00000000   check cache line brought back from memory
     req( 'rd', 0x04, 0x00000004, 0, 0          ), resp('rd', 0x04, 1,   0, 0x00c0ffee ), # read word  0x00000004   check cache line brought back from memory
   ]
 
@@ -461,7 +461,7 @@ def entire_cache_read_mem( base_addr ):
 # Test Case: conflict misses that should pass in alternative design and fail in baseline design
 #-------------------------------------------------------------------------
 
-def conflict_misses_msg( base_addr ):
+def conflict_misses_dmap_msg( base_addr ):
   return [
     #    type  opq   addr      len  data               type  opq test  len data
     req( 'rd', 0x00, 0x00000000, 0, 0          ), resp('rd', 0x00, 0,   0, 0xdeadbeef ), # read word  0x00000000   bring back first cache line
@@ -472,8 +472,17 @@ def conflict_misses_msg( base_addr ):
     req( 'rd', 0x03, 0x00000000, 0, 0          ), resp('rd', 0x03, 0,   0, 0xdeadbeef ), # read word  0x00000000   conflict miss
   ]
 
-# Data to be loaded into memory before running the test
-
+def conflict_misses_asso_msg( base_addr ):
+  return [
+    #    type  opq   addr      len  data               type  opq test  len data
+    req( 'rd', 0x00, 0x00000000, 0, 0          ), resp('rd', 0x00, 0,   0, 0xdeadbeef ), # read word  0x00000000   bring back first cache line
+    req( 'rd', 0x01, 0x00000004, 0, 0          ), resp('rd', 0x01, 1,   0, 0x00c0ffee ), # read word  0x00000004   hit because this word is brought back already
+    # same offset & index but different tag
+    req( 'rd', 0x02, 0x00000100, 0, 0          ), resp('rd', 0x02, 0,   0, 0xa5a5a5a5 ), # read word  0x00000100   compulsory miss, and replaces the cache line just brought back from memory
+    # reread the first word in way 0, should hit in asso
+    req( 'rd', 0x03, 0x00000000, 0, 0          ), resp('rd', 0x03, 1,   0, 0xdeadbeef ), # read word  0x00000000   conflict miss
+  ]
+  
 def conflict_misses_mem( base_addr ):
   return [
     # addr      data (in int)
@@ -653,10 +662,10 @@ test_case_table_generic = mk_test_case_table([
   [ "write_hit_1word_dirty", write_hit_1word_dirty, None,                 0,    0.0,  0,  0,  0    ],
   [ "read_miss_1word",       read_miss_1word_msg,   read_miss_1word_mem,  0,    0.0,  0,  0,  0    ],
   [ "write_miss_1word",      write_miss_1word_msg,  write_miss_1word_mem, 0,    0.0,  0,  0,  0    ],
-  [ "read_miss_evict",       read_miss_evict_msg,   read_miss_evict_mem,  0,    0.0,  0,  0,  0    ],
+  #[ "read_miss_evict",       read_miss_evict_msg,   read_miss_evict_mem,  0,    0.0,  0,  0,  0    ],
   [ "write_miss_evict",      write_miss_evict_msg,  write_miss_evict_mem, 0,    0.0,  0,  0,  0    ],
   [ "entire_cache_read",     entire_cache_read_msg, entire_cache_read_mem,0,    0.0,  0,  0,  0    ],
-  [ "conflict_misses",       conflict_misses_msg,   conflict_misses_mem,  0,    0.0,  0,  0,  0    ],
+  #[ "conflict_misses",       conflict_misses_msg,   conflict_misses_mem,  0,    0.0,  0,  0,  0    ],
   [ "capacity_misses",       capacity_misses_msg,   capacity_misses_mem,  0,    0.0,  0,  0,  0    ],
   [ "read_hit_1word_4bank",  read_hit_1word_clean,  None,                 4,    0.0,  0,  0,  0    ],
 
@@ -696,10 +705,10 @@ test_case_table_generic_with_delays = mk_test_case_table([
   [ "write_hit_1word_dirty", write_hit_1word_dirty, None,                 0,    random.random(), random.randint(0,10), random.randint(0,10), random.randint(0,10) ],
   [ "read_miss_1word",       read_miss_1word_msg,   read_miss_1word_mem,  0,    random.random(), random.randint(0,10), random.randint(0,10), random.randint(0,10) ],
   [ "write_miss_1word",      write_miss_1word_msg,  write_miss_1word_mem, 0,    random.random(), random.randint(0,10), random.randint(0,10), random.randint(0,10) ],
-  [ "read_miss_evict",       read_miss_evict_msg,   read_miss_evict_mem,  0,    random.random(), random.randint(0,10), random.randint(0,10), random.randint(0,10) ],
+  #[ "read_miss_evict",       read_miss_evict_msg,   read_miss_evict_mem,  0,    random.random(), random.randint(0,10), random.randint(0,10), random.randint(0,10) ],
   [ "write_miss_evict",      write_miss_evict_msg,  write_miss_evict_mem, 0,    random.random(), random.randint(0,10), random.randint(0,10), random.randint(0,10) ],
   [ "entire_cache_read",     entire_cache_read_msg, entire_cache_read_mem,0,    random.random(), random.randint(0,10), random.randint(0,10), random.randint(0,10) ],
-  [ "conflict_misses",       conflict_misses_msg,   conflict_misses_mem,  0,    random.random(), random.randint(0,10), random.randint(0,10), random.randint(0,10) ],
+  #[ "conflict_misses",       conflict_misses_msg,   conflict_misses_mem,  0,    random.random(), random.randint(0,10), random.randint(0,10), random.randint(0,10) ],
   [ "capacity_misses",       capacity_misses_msg,   capacity_misses_mem,  0,    random.random(), random.randint(0,10), random.randint(0,10), random.randint(0,10) ],
   [ "read_hit_1word_4bank",  read_hit_1word_clean,  None,                 4,    random.random(), random.randint(0,10), random.randint(0,10), random.randint(0,10) ],
 
@@ -813,17 +822,525 @@ class random_tests_2():
 random_2 = random_tests_2()
 
 #-------------------------------------------------------------------------
+# Function Level Model for Random Test
+#-------------------------------------------------------------------------
+
+# class random_test:
+#   def __init__(self, test_number):
+#     self.cache_model = {}  # {idx: [tag, data], }
+#     self.memory_model_init = {} # {addr:data, }
+#     self.memory_model = {}
+#     self.instruct_msg = [] # {req(...), resp(...), }
+#     self.Num_of_Rand_Tests = 250
+#     for i in xrange(self.Num_of_Rand_Tests):
+#       addr = (Bits(32,random.randint(0, self.Num_of_Rand_Tests)) << 2).uint()
+#       data = Bits(32,random.randint(0,2**32-1)).uint()
+#       self.memory_model_init[addr] = data
+#     self.memory_model = copy.deepcopy(self.memory_model_init)
+#     self.gen_instructs(test_number)
+  
+#   def get_instructs(self, dummy):
+#     return self.instruct_msg
+  
+#   def get_cache_line(self, addr):
+#     tag = Bits(32, addr)[8:32].uint()
+#     idx = Bits(32, addr)[4:8].uint()
+#     cache_line = self.cache_model.get(idx)
+#     if cache_line is None: # compulsory or conflict miss
+#       return None
+#     elif cache_line[0] == tag: # hit
+#       return cache_line[1]
+#     else: # conflict miss
+#       return None
+  
+#   def evict_to_mem(self, addr, data):
+#     self.memory_model[addr] = data
+  
+#   def update_cache_word(self,addr, data, line):
+#     word_offset = Bits(32, addr)[2:4].uint()
+#     cache_line = self.get_cache_line(addr)
+#     # if addr == 0x00000058:
+#     #   print("addr == 0x00000058, cacheline: {}".format(cache_line))
+#     if cache_line is None: # cold cache line, no need to evict
+#       line = self.repl_word_in_line(line, data, word_offset)
+#       self.update_cache_line(addr, line)
+#     else: # need to evict what's currently in the cache line into DRAMS
+#       idx = Bits(32, addr)[4:8].uint()
+#       old_tag = self.cache_model[idx][0]
+#       old_addr = concat(Bits(24, old_tag), Bits(4, idx), Bits(4,0)).uint()
+#       cache_line_temp = Bits(128, cache_line)
+#       for i in range(4): 
+#         line_data_word = cache_line_temp[(3-i)*32:(4-i)*32].uint()
+#         # if self.memory_model.get(old_addr + i*4) is not None:
+#         #   print("Before evict: addr: {}, data: {}".format(Bits(32,old_addr + i*4).hex(), Bits(32,self.memory_model.get(old_addr + i*4)).hex()))
+#         # else:
+#         #   print("Before evict: addr: {}, data: {}".format(Bits(32,old_addr + i*4).hex(), Bits(32,0).hex()))
+#         self.evict_to_mem(old_addr + i*4, line_data_word)
+#         # print("After evict: addr: {}, data: {}".format(Bits(32,old_addr + i*4).hex(), Bits(32,self.memory_model[old_addr + i*4]).hex()))
+#       line = self.repl_word_in_line(line, data, word_offset)
+#       self.update_cache_line(addr, line)
+
+
+#   def update_cache_line(self, addr, line):
+#     tag = Bits(32, addr)[8:32].uint()
+#     idx = Bits(32, addr)[4:8].uint()
+#     cache_line = self.cache_model.get(idx) 
+#     if cache_line is None:
+#       self.cache_model[idx] = [tag, line]
+#     else:
+#       cache_line_temp = Bits(128, cache_line[1])
+#       idx = Bits(32, addr)[4:8].uint()
+#       old_tag = self.cache_model[idx][0]
+#       old_addr = concat(Bits(24, old_tag), Bits(4, idx), Bits(4,0)).uint()
+#       for i in range(4): 
+#         line_data_word = cache_line_temp[(3-i)*32:(4-i)*32].uint()
+#         # if self.memory_model.get(old_addr + i*4) is not None:
+#         #   print("Before evict: addr: {}, data: {}".format(Bits(32,old_addr + i*4).hex(), Bits(32,self.memory_model.get(old_addr + i*4)).hex()))
+#         # else:
+#         #   print("Before evict: addr: {}, data: {}".format(Bits(32,old_addr + i*4).hex(), Bits(32,0).hex()))
+#         self.evict_to_mem(old_addr + i*4, line_data_word)
+#         # print("After evict: addr: {}, data: {}".format(Bits(32,old_addr + i*4).hex(), Bits(32,self.memory_model[old_addr + i*4]).hex()))
+#       self.cache_model[idx] = [tag, line]
+
+#   def fetch_mem_line(self, addr):
+#     addr = ((Bits(32,addr)>>4)<<4).uint()
+#     # print("fetch_mem_line addr: {}".format(Bits(32, addr)))
+#     line_data = [self.memory_model.get(addr), self.memory_model.get(addr+4), self.memory_model.get(addr+8), self.memory_model.get(addr+12)]
+#     for i in range(len(line_data)):
+#       line_data[i] = Bits(32, line_data[i]) if line_data[i] is not None else Bits(32,0)
+#       # if self.memory_model.get(addr+i*4) is not None:
+#       #   print("addr: {}, data: {}".format((Bits(32,addr)+i*4).hex(),Bits(32,self.memory_model.get(addr+i*4)).hex()))
+#       # else:
+#       #   print("addr: {}, data: {}".format((Bits(32,addr)+i*4).hex(),Bits(32,0).hex()))
+#     line = concat(line_data[0], line_data[1], line_data[2], line_data[3])
+#     return line.uint()
+  
+#   def repl_word_in_line(self, line, word, word_offset):
+#     line = Bits(128, line)
+#     line[(3-word_offset)*32:(4-word_offset)*32] = word
+#     return line.uint()
+
+#   # Generates stride with random data
+#   def gen_instructs(self, test_number):
+#     self.cache_model = {}
+#     hit_count = 0
+#     miss_count = 0
+#     for i in xrange(self.Num_of_Rand_Tests):
+#       if (test_number is 1 or test_number is 2 or test_number is 3): # Simple address patterns, causing no hit
+#         addr = i * 16
+#       elif (test_number is 4): # Random address patterns
+#         addr = (Bits(32,random.randint(0,self.Num_of_Rand_Tests)) << 2).uint()
+#       elif (test_number is 5): # Unit stride, one word at a time
+#         addr = i * 4
+#       elif (test_number is 6): # Longer stride, with one word interval
+#         addr = i * 8
+#       elif (test_number is 7): # Unit stride (high spatial locality) mixed with shared (high temporal locality)
+#         if (random.random() > 0.5):
+#           addr = i * 4
+#         else:
+#           addr = random.randint(0,i) * 4
+#       print('\n'+'addr = '+str(addr))
+#       # Random Data
+#       rand_data = Bits(32,random.randint(0,2**32-1)).uint()
+#       print('data = '+str(rand_data))
+#       tag = Bits(32, addr)[8:32].uint()
+#       idx = Bits(32, addr)[4:8].uint()
+
+#       assert(Bits(32, addr)[0:3].uint() % 4 == 0)
+#       cacheline_data = self.get_cache_line(addr)
+#       word_offset = Bits(32, addr)[2:4].uint()
+#       if (test_number is 1):   # Read Type
+#         type = 0
+#       elif (test_number is 2): # Write Type
+#         type = 1
+#       else:                    # Random Type
+#         type = random.randint(0,1)
+
+#       if cacheline_data is not None: # we have a hit
+#         hit_count+=1
+#         print('Test = Hit')
+#         word = Bits(128, cacheline_data)[(3-word_offset)*32:(4-word_offset)*32].uint()
+
+#         if type == 0: # rd instruct hit
+#           print('Type = read')
+#           self.instruct_msg.append(req('rd', i, addr, 0, 0))
+#           self.instruct_msg.append(resp('rd',i, 1, 0, word))
+#           # if addr == 0x00000008:
+#           #   print('\n',i)
+#           #   print(Bits(32,word).hex())
+#           #   print(resp('rd',i, 0, 0, word))
+#           #   print(Bits(128,self.cache_model[idx][1]))
+#           print(req('rd', i, addr, 0, 0), resp('rd',i, 1, 0, word))
+#         else: # write hit
+#           print('Type = write')
+#           self.instruct_msg.append(req('wr', i, addr, 0, rand_data))
+#           self.instruct_msg.append(resp('wr', i, 1, 0, 0))
+#           self.update_cache_word(addr, rand_data, cacheline_data)
+#           # print(req('wr', i, addr, 0, rand_data), resp('wr', i, 1, 0, 0))
+#           # print(Bits(128, self.cache_model[idx][1]).hex())
+#       else: # cache miss
+#         miss_count+=1
+#         print('Test = Miss')
+#         word = self.memory_model.get(addr) 
+#         word = word if word is not None else 0
+#         line = self.fetch_mem_line(addr)
+
+#         if type == 0: # rd instruct
+#           print('Type = read')
+#           self.instruct_msg.append(req('rd', i, addr, 0, 0))
+#           self.instruct_msg.append(resp('rd',i, 0, 0, word))
+#           self.update_cache_line(addr, line)
+#           assert(self.cache_model[idx][1] == line)
+
+#           # print(req('rd', i, addr, 0, 0), resp('rd',i, 0, 0, word))
+            
+#         else: # write miss, need to check conflict miss before putting mem line into cache
+#           print('Type = write')
+#           self.instruct_msg.append(req('wr', i, addr, 0, rand_data))
+#           self.instruct_msg.append(resp('wr', i, 0, 0, 0))
+#           # print("mem for addr == {}: {}".format(Bits(32, addr).hex(), Bits(128, line).hex()))
+#           self.update_cache_word(addr, rand_data, line)
+#           # print("cache line for addr == {}: {}".format(Bits(32, addr).hex(), Bits(128, self.cache_model[idx][1]).hex()))
+
+#           # print(req('wr', i, addr, 0, rand_data), resp('wr', i, 0, 0, 0))
+#     print('Hit count = '+str(hit_count))
+#     print('Miss count = '+str(miss_count))
+
+#   def get_mem_msg(self, dummy):
+#     return_msg = []
+#     for key, val in self.memory_model_init.items():
+#       return_msg.append(key)
+#       return_msg.append(val)
+#     return return_msg
+
+class random_test:
+  # This simulator support both 2-way set associative cache and direct mapped cache.
+  # for 2-way, the data structure for cache looks like this: {idx:[[tag0, data0], [tag1, data1]],...}
+  def __init__(self, test_number, cache_type='dmap'):
+    assert(cache_type == 'dmap' or cache_type == 'alter')
+    self.cache_model = {}  # {idx: [tag, data], } or {idx:[[tag0, data0], [tag1, data1]],...}
+    self.memory_model_init = {} # {addr:data, }
+    self.memory_model = {}
+    self.instruct_msg = [] # {req(...), resp(...), }
+    self.cache_type = cache_type
+    self.Num_of_Rand_Tests = 250
+    self.LRU = [False for x in range(16)] # assume 16 sets in total
+
+    for i in xrange(self.Num_of_Rand_Tests):
+      addr = (Bits(32,random.randint(0,self.Num_of_Rand_Tests)) << 2).uint()
+      data = Bits(32,random.randint(0,2**32-1)).uint()
+      self.memory_model_init[addr] = data
+    self.memory_model = copy.deepcopy(self.memory_model_init)
+    self.gen_instructs(test_number)
+  
+  def get_instructs(self, dummy):
+    return self.instruct_msg
+  
+  def get_cache_line(self, addr):
+    tag = Bits(32, addr)[4:32].uint()
+    
+    if self.cache_type == 'dmap':
+      idx = Bits(32, addr)[4:8].uint()
+      cache_line = self.cache_model.get(idx)
+      if cache_line is None: # compulsory or conflict miss
+        return None
+      elif cache_line[0] == tag: # hit
+        return cache_line[1]
+      else: # conflict miss
+        return None
+    else:
+      idx = Bits(32, addr)[4:7].uint()
+      cache_set = self.cache_model.get(idx)
+      # for 2way, check one more way
+      if cache_set is None: # compulsory or conflict miss
+        return None
+      # This can further support multiple way set asso cache
+      # But we only assume there are 2 ways for this test.
+      for way in cache_set:
+        if way[0] == tag:
+          return way[1]
+      return None 
+  
+  def update_LRU(self, idx, tag):
+    cache_set = self.cache_model[idx]
+    way = 0
+    for i in range(len(cache_set)):
+      if tag == cache_set[i][0]:
+        way = i
+        break
+    self.LRU[idx] = not way
+      
+  def evict_to_mem(self, addr, line):
+    for i in range(4):
+      line_data_word = line[(3-i)*32:(4-i)*32].uint()
+      self.memory_model[addr + i*4] = line_data_word
+
+  def update_cache_line(self, addr, line):
+    tag = Bits(32, addr)[4:32].uint()
+    if self.cache_type == 'dmap':
+      idx = Bits(32, addr)[4:8].uint()
+      cache_line = self.cache_model.get(idx) 
+      if cache_line is None:
+        self.cache_model[idx] = [tag, line]
+      else:
+        cache_line_temp = Bits(128, cache_line[1])
+        idx = Bits(32, addr)[4:8].uint()
+        old_tag = self.cache_model[idx][0]
+        old_addr = concat(Bits(28, old_tag), Bits(4,0)).uint()
+        self.evict_to_mem(old_addr, cache_line_temp)
+        self.cache_model[idx] = [tag, line]
+    else:
+      idx = Bits(32, addr)[4:7].uint()
+      cache_line = self.cache_model.get(idx) 
+      if cache_line is None: # all empty way
+        self.cache_model[idx] = []
+        self.cache_model[idx].append([tag, line])
+        self.LRU[idx] = not self.LRU[idx]
+      elif len(cache_line) == 1:
+        if cache_line[0][0] == tag:
+          self.cache_model[idx][0] = [tag, line]
+          if 0 == self.LRU[idx]:
+            self.LRU[idx] = not self.LRU[idx]
+        else:
+          self.cache_model[idx].append([tag, line])
+          self.LRU[idx] = False
+      elif len(cache_line) > 1:
+        # need to consider what if self.LRU[idx] is None
+        hit,way = False,0
+        for i in range(len(self.cache_model[idx])):
+          if self.cache_model[idx][i][0] == tag:
+            hit = True
+            way = i
+        if hit:
+          self.cache_model[idx][way] = [tag, line]
+          if way == self.LRU[idx]:
+            self.LRU[idx] = not self.LRU[idx]
+        else:
+          cache_line_temp = Bits(128, cache_line[self.LRU[idx]][1])
+          old_tag = self.cache_model[idx][self.LRU[idx]][0]
+          old_addr = concat(Bits(28, old_tag), Bits(4,0)).uint()
+          self.evict_to_mem(old_addr, cache_line_temp)
+          self.cache_model[idx][self.LRU[idx]] = [tag, line]
+          self.LRU[idx] = not self.LRU[idx]
+
+
+  def fetch_mem_line(self, addr):
+    addr = ((Bits(32,addr)>>4)<<4).uint()
+    line_data = [self.memory_model.get(addr), self.memory_model.get(addr+4), self.memory_model.get(addr+8), self.memory_model.get(addr+12)]
+    for i in range(len(line_data)):
+      line_data[i] = Bits(32, line_data[i]) if line_data[i] is not None else Bits(32,0)
+    line = concat(line_data[0], line_data[1], line_data[2], line_data[3])
+    return line.uint()
+  
+  def repl_word_in_line(self, line, word, word_offset):
+    line = Bits(128, line)
+    line[(3-word_offset)*32:(4-word_offset)*32] = word
+    return line.uint()
+
+  # Generates stride with random data
+  def gen_instructs(self, test_number):
+    self.cache_model = {}
+    hit_count = 0
+    miss_count = 0
+    for i in xrange(self.Num_of_Rand_Tests):
+      if (test_number is 1 or test_number is 2 or test_number is 3): # Simple address patterns, causing no hit
+        addr = i * 16
+      elif (test_number is 4): # Random address patterns
+        addr = (Bits(32,random.randint(0,self.Num_of_Rand_Tests)) << 2).uint()
+      elif (test_number is 5): # Unit stride, one word at a time
+        addr = i * 4
+      elif (test_number is 6): # Longer stride, with one word interval
+        addr = i * 8
+      elif (test_number is 7): # Unit stride (high spatial locality) mixed with shared (high temporal locality)
+        if (random.random() > 0.5):
+          addr = i * 4
+        else:
+          addr = random.randint(0,i) * 4
+      print('\n'+'addr = '+str(addr))
+      # Random Data
+      rand_data = Bits(32,random.randint(0,2**32-1)).uint()
+      print('data = '+str(rand_data))
+      tag = Bits(32, addr)[4:32].uint()
+      if self.cache_type == 'dmap':
+        idx = Bits(32, addr)[4:8].uint()
+      else:
+        idx = Bits(32, addr)[4:7].uint()
+
+      assert(Bits(32, addr)[0:3].uint() % 4 == 0)
+      cacheline_data = self.get_cache_line(addr)
+      word_offset = Bits(32, addr)[2:4].uint()
+      if (test_number is 1):   # Read Type
+        type = 0
+      elif (test_number is 2): # Write Type
+        type = 1
+      else:                    # Random Type
+        type = random.randint(0,1)
+
+      # if self.cache_type != 'dmap':
+      #   print("\nIteration {}:".format(i))
+      #   print("Current idx: {}, tag: {}, addr: {}".format(Bits(3,idx).hex(), Bits(28,tag).hex(), Bits(32, addr).hex()))
+      #   for temp_idx, cache_set in self.cache_model.items():
+      #     string = "[idx: {}".format(temp_idx)
+      #     for x in range(len(cache_set)):
+      #       string += "[tag{}: {}, data{}: {}],".format(x, Bits(28, cache_set[x][0]).hex(), x, Bits(128,cache_set[x][1]).hex())
+      #     string += "]"
+      #     print(string) 
+      #   print(self.LRU)
+          
+
+      if cacheline_data is not None: # we have a hit
+        hit_count+=1
+        print('Test = Hit')
+        word = Bits(128, cacheline_data)[(3-word_offset)*32:(4-word_offset)*32].uint()
+
+        if type == 0: # rd instruct hit
+          self.instruct_msg.append(req('rd', i, addr, 0, 0))
+          self.instruct_msg.append(resp('rd',i, 1, 0, word))
+          if self.cache_type != 'dmap':
+            self.update_LRU(idx, tag)
+          
+          # print(req('rd', i, addr, 0, 0), resp('rd',i, 1, 0, word))
+        else: # write hit
+          print('Type = write')
+          self.instruct_msg.append(req('wr', i, addr, 0, rand_data))
+          self.instruct_msg.append(resp('wr', i, 1, 0, 0))
+          new_line = self.repl_word_in_line(cacheline_data, rand_data, word_offset)
+          self.update_cache_line(addr, new_line)
+          # print(req('wr', i, addr, 0, rand_data), resp('wr', i, 1, 0, 0))
+      else: # cache miss
+        miss_count+=1
+        print('Test = Miss')
+        word = self.memory_model.get(addr) 
+        word = word if word is not None else 0
+        line = self.fetch_mem_line(addr)
+
+        if type == 0: # rd instruct
+          print('Type = read')
+          self.instruct_msg.append(req('rd', i, addr, 0, 0))
+          self.instruct_msg.append(resp('rd',i, 0, 0, word))
+          self.update_cache_line(addr, line)
+
+          # print(req('rd', i, addr, 0, 0), resp('rd',i, 0, 0, word))
+            
+        else: # write miss, need to check conflict miss before putting mem line into cache
+          print('Type = write')
+          self.instruct_msg.append(req('wr', i, addr, 0, rand_data))
+          self.instruct_msg.append(resp('wr', i, 0, 0, 0))
+          new_line = self.repl_word_in_line(line=line, word=rand_data, word_offset=word_offset)
+          self.update_cache_line(addr, new_line)
+          # print(req('wr', i, addr, 0, rand_data), resp('wr', i, 0, 0, 0))
+      # if self.cache_type != 'dmap':   
+      #   string = "["
+      #   cache_set = self.cache_model[idx]
+      #   for x in range(len(cache_set)):
+      #     string += "[tag{}: {}, data{}: {}],".format(x, Bits(28, cache_set[x][0]).hex(), x, Bits(128,cache_set[x][1]).hex())
+      #   string += "]"
+      #   print(string) 
+      #   print(self.LRU)
+    print('Hit count = '+str(hit_count))
+    print('Miss count = '+str(miss_count))
+
+  def get_mem_msg(self, dummy):
+    return_msg = []
+    for key, val in self.memory_model_init.items():
+      return_msg.append(key)
+      return_msg.append(val)
+    return return_msg
+
+#-------------------------------------------------------------------------
+# Instantiate and Initiate Function Level Model
+#-------------------------------------------------------------------------
+rand_test_dmap_1 = random_test(1, 'dmap')
+rand_test_dmap_2 = random_test(2, 'dmap')
+rand_test_dmap_3 = random_test(3, 'dmap')
+rand_test_dmap_4 = random_test(4, 'dmap')
+rand_test_dmap_5 = random_test(5, 'dmap')
+rand_test_dmap_6 = random_test(6, 'dmap')
+rand_test_dmap_7 = random_test(7, 'dmap')
+rand_test_alter_1 = random_test(1, 'alter')
+rand_test_alter_2 = random_test(2, 'alter')
+rand_test_alter_3 = random_test(3, 'alter')
+rand_test_alter_4 = random_test(4, 'alter')
+rand_test_alter_5 = random_test(5, 'alter')
+rand_test_alter_6 = random_test(6, 'alter')
+rand_test_alter_7 = random_test(7, 'alter')
+# print("\n")
+# # i = 0
+# # while i < len(rand_test.instruct_msg)-1:
+# #   print(rand_test.instruct_msg[i], rand_test.instruct_msg[i+1])
+# #   i += 2
+# dict_dummy = {}
+# print("memory_model_init:")
+# for key, val in rand_test.memory_model_init.items():
+#   dict_dummy[Bits(32,key).hex()] = Bits(32, val).hex()
+# print(dict_dummy)
+# dict_dummy = {}
+# print("memory_model:")
+# for key, val in rand_test.memory_model.items():
+#   dict_dummy[Bits(32,key).hex()] = Bits(32, val).hex()
+# print(dict_dummy)
+
+#-------------------------------------------------------------------------
 # Test table for random test
 #-------------------------------------------------------------------------
 
-test_case_table_random = mk_test_case_table([
-  (                         "msg_func                   mem_data_func               nbank stall lat src sink"),
-  [ "random_test_1_read",    random_1_rd.rand_1_msg,    random_1_rd.rand_1_mem,     0,    0.0,  0,  0,  0    ],
-  [ "random_test_1_write",   random_1_wr.rand_1_msg,    random_1_wr.rand_1_mem,     0,    0.0,  0,  0,  0    ],
-  [ "random_test_2",         random_2.rand_2_msg,       random_2.rand_2_mem,        0,    0.0,  0,  0,  0    ],
+test_case_table_dmap_random = mk_test_case_table([
+  (                            "msg_func                        mem_data_func               nbank stall lat src sink"),
+  # [ "random_test_1_read",    random_1_rd.rand_1_msg,    random_1_rd.rand_1_mem,     0,    0.0,  0,  0,  0    ],
+  # [ "random_test_1_write",   random_1_wr.rand_1_msg,    random_1_wr.rand_1_mem,     0,    0.0,  0,  0,  0    ],
+  # [ "random_test_2",         random_2.rand_2_msg,       random_2.rand_2_mem,        0,    0.0,  0,  0,  0    ],
+  [ "rand_test_dmap_1",         rand_test_dmap_1.get_instructs, rand_test_dmap_1.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
+  [ "rand_test_dmap_2",         rand_test_dmap_2.get_instructs, rand_test_dmap_2.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
+  [ "rand_test_dmap_3",         rand_test_dmap_3.get_instructs, rand_test_dmap_3.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
+  [ "rand_test_dmap_4",         rand_test_dmap_4.get_instructs, rand_test_dmap_4.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
+  [ "rand_test_dmap_5",         rand_test_dmap_5.get_instructs, rand_test_dmap_5.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
+  [ "rand_test_dmap_6",         rand_test_dmap_6.get_instructs, rand_test_dmap_6.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
+  [ "rand_test_dmap_7",         rand_test_dmap_7.get_instructs, rand_test_dmap_7.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
+  # [ "rand_test_alter_1",         rand_test_alter_1.get_instructs, rand_test_alter_1.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
+  # [ "rand_test_alter_2",         rand_test_alter_2.get_instructs, rand_test_alter_2.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
+  # [ "rand_test_alter_3",         rand_test_alter_3.get_instructs, rand_test_alter_3.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
+  # [ "rand_test_alter_4",         rand_test_alter_4.get_instructs, rand_test_alter_4.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
+  # [ "rand_test_alter_5",         rand_test_alter_5.get_instructs, rand_test_alter_5.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
+  # [ "rand_test_alter_6",         rand_test_alter_6.get_instructs, rand_test_alter_6.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
+  # [ "rand_test_alter_7",         rand_test_alter_7.get_instructs, rand_test_alter_7.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
 ])
 
-@pytest.mark.parametrize( **test_case_table_random )
+@pytest.mark.parametrize( **test_case_table_dmap_random )
+def test_random( test_params, dump_vcd ):
+  msgs = test_params.msg_func( 0 )
+  if test_params.mem_data_func != None:
+    mem = test_params.mem_data_func( 0 )
+  # Instantiate testharness
+  harness = TestHarness( msgs[::2], msgs[1::2],
+                         test_params.stall, test_params.lat,
+                         test_params.src, test_params.sink,
+                         BlockingCacheFL, test_params.nbank,
+                         False, dump_vcd )
+  # Load memory before the test
+  if test_params.mem_data_func != None:
+    harness.load( mem[::2], mem[1::2] )
+  # Run the test
+  run_sim( harness, dump_vcd )
+
+test_case_table_asso_random = mk_test_case_table([
+  (                             "msg_func                         mem_data_func                    nbank stall lat src sink"),
+  # [ "rand_test_dmap_1",         rand_test_dmap_1.get_instructs, rand_test_dmap_1.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
+  # [ "rand_test_dmap_2",         rand_test_dmap_2.get_instructs, rand_test_dmap_2.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
+  # [ "rand_test_dmap_3",         rand_test_dmap_3.get_instructs, rand_test_dmap_3.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
+  # [ "rand_test_dmap_4",         rand_test_dmap_4.get_instructs, rand_test_dmap_4.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
+  # [ "rand_test_dmap_5",         rand_test_dmap_5.get_instructs, rand_test_dmap_5.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
+  # [ "rand_test_dmap_6",         rand_test_dmap_6.get_instructs, rand_test_dmap_6.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
+  # [ "rand_test_dmap_7",         rand_test_dmap_7.get_instructs, rand_test_dmap_7.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
+  [ "rand_test_alter_1",         rand_test_alter_1.get_instructs, rand_test_alter_1.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
+  [ "rand_test_alter_2",         rand_test_alter_2.get_instructs, rand_test_alter_2.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
+  [ "rand_test_alter_3",         rand_test_alter_3.get_instructs, rand_test_alter_3.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
+  [ "rand_test_alter_4",         rand_test_alter_4.get_instructs, rand_test_alter_4.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
+  [ "rand_test_alter_5",         rand_test_alter_5.get_instructs, rand_test_alter_5.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
+  [ "rand_test_alter_6",         rand_test_alter_6.get_instructs, rand_test_alter_6.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
+  [ "rand_test_alter_7",         rand_test_alter_7.get_instructs, rand_test_alter_7.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
+])
+
+@pytest.mark.parametrize( **test_case_table_asso_random )
 def test_random( test_params, dump_vcd ):
   msgs = test_params.msg_func( 0 )
   if test_params.mem_data_func != None:
@@ -845,9 +1362,16 @@ def test_random( test_params, dump_vcd ):
 #-------------------------------------------------------------------------
 
 test_case_table_set_assoc = mk_test_case_table([
-  (                             "msg_func        mem_data_func    nbank stall lat src sink"),
-  [ "read_hit_asso",             read_hit_asso,  None,            0,    0.0,  0,  0,  0    ],
-  [ "LRU",                       LRU_msg,        LRU_mem,         0,    0.0,  0,  0,  0    ],
+  (                             "msg_func                        mem_data_func          nbank stall lat src sink"),
+  [ "read_hit_asso",             read_hit_asso,                  None,                  0,    0.0,  0,  0,  0    ],
+  [ "read_miss_evict_asso",      read_miss_evict_asso_msg,       read_miss_evict_mem,   0,    0.0,  0,  0,  0    ],
+  [ "conflict_misses_asso",      conflict_misses_asso_msg,       conflict_misses_mem,   0,    0.0,  0,  0,  0    ],
+  [ "LRU",                       LRU_msg,                        LRU_mem,               0,    0.0,  0,  0,  0    ],
+
+  [ "read_hit_asso_bank",        read_hit_asso,                  None,                  4,    0.0,  0,  0,  0    ],
+  [ "read_miss_evict_asso_bank", read_miss_evict_asso_msg,       read_miss_evict_mem,   4,    0.0,  0,  0,  0    ],
+  [ "conflict_misses_asso_bank", conflict_misses_asso_msg,       conflict_misses_mem,   4,    0.0,  0,  0,  0    ],
+  [ "LRU_bank",                  LRU_msg,                        LRU_mem,               4,    0.0,  0,  0,  0    ],
 
   #'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
   # LAB TASK: Add test cases to this table
@@ -878,10 +1402,16 @@ def test_set_assoc( test_params, dump_vcd ):
 #-------------------------------------------------------------------------
 
 test_case_table_dir_mapped = mk_test_case_table([
-  (                                  "msg_func                 mem_data_func          nbank stall lat src sink"),
-  [ "read_hit_dmap",                  read_hit_dmap,           None,                  0,    0.0,  0,  0,  0    ],
-  [ "NoBank_4WM_2RM_2RH_dmap",        NoBank_4WM_2RM_2RH_dmap, None,                  0,    0.0,  0,  0,  0    ],
-  [ "W4Bank_4WM_4RM_dmap",            W4Bank_4WM_4RM_dmap,     None,                  4,    0.0,  0,  0,  0    ],
+  (                                  "msg_func                  mem_data_func          nbank stall lat src sink"),
+  [ "read_hit_dmap",                  read_hit_dmap,            None,                  0,    0.0,  0,  0,  0    ],
+  [ "read_miss_evict_dmap",           read_miss_evict_dmap_msg, read_miss_evict_mem,   0,    0.0,  0,  0,  0    ],
+  [ "conflict_misses_damp",           conflict_misses_dmap_msg, conflict_misses_mem,   0,    0.0,  0,  0,  0    ],
+  [ "NoBank_4WM_2RM_2RH_dmap",        NoBank_4WM_2RM_2RH_dmap,  None,                  0,    0.0,  0,  0,  0    ],
+  [ "W4Bank_4WM_4RM_dmap",            W4Bank_4WM_4RM_dmap,      None,                  4,    0.0,  0,  0,  0    ],
+
+  [ "read_hit_dmap_bank",             read_hit_dmap,            None,                  4,    0.0,  0,  0,  0    ],
+  # [ "read_miss_evict_dmap_bank",      read_miss_evict_dmap_msg, read_miss_evict_mem,   4,    0.0,  0,  0,  0    ],
+  # [ "conflict_misses_damp_bank",      conflict_misses_dmap_msg, conflict_misses_mem,   4,    0.0,  0,  0,  0    ],
 
   #'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
   # LAB TASK: Add test cases to this table
