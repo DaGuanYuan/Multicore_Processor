@@ -145,7 +145,7 @@ def loop_1d( size = 100 ):
 # Pattern: loop-2d
 #-------------------------------------------------------------------------
 
-def loop_2d( size = 100 ):
+def loop_2d( size = 65 ):
 
   src_msgs  = []
   sink_msgs = []

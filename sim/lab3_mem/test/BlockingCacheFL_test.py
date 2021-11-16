@@ -10,7 +10,7 @@ import struct
 import math
 import copy
 
-random.seed(0xa4e28cc2)
+random.seed(0xa4e28cc4)
 
 from pymtl      import *
 from pclib.test import mk_test_case_table, run_sim
@@ -1156,10 +1156,10 @@ class random_test:
           addr = i * 4
         else:
           addr = random.randint(0,i) * 4
-      print('\n'+'addr = '+str(addr))
+      # print('\n'+'addr = '+str(addr))
       # Random Data
       rand_data = Bits(32,random.randint(0,2**32-1)).uint()
-      print('data = '+str(rand_data))
+      # print('data = '+str(rand_data))
       tag = Bits(32, addr)[4:32].uint()
       if self.cache_type == 'dmap':
         idx = Bits(32, addr)[4:8].uint()
@@ -1190,7 +1190,7 @@ class random_test:
 
       if cacheline_data is not None: # we have a hit
         hit_count+=1
-        print('Test = Hit')
+        # print('Test = Hit')
         word = Bits(128, cacheline_data)[(3-word_offset)*32:(4-word_offset)*32].uint()
 
         if type == 0: # rd instruct hit
@@ -1201,7 +1201,7 @@ class random_test:
           
           # print(req('rd', i, addr, 0, 0), resp('rd',i, 1, 0, word))
         else: # write hit
-          print('Type = write')
+          # print('Type = write')
           self.instruct_msg.append(req('wr', i, addr, 0, rand_data))
           self.instruct_msg.append(resp('wr', i, 1, 0, 0))
           new_line = self.repl_word_in_line(cacheline_data, rand_data, word_offset)
@@ -1209,13 +1209,13 @@ class random_test:
           # print(req('wr', i, addr, 0, rand_data), resp('wr', i, 1, 0, 0))
       else: # cache miss
         miss_count+=1
-        print('Test = Miss')
+        # print('Test = Miss')
         word = self.memory_model.get(addr) 
         word = word if word is not None else 0
         line = self.fetch_mem_line(addr)
 
         if type == 0: # rd instruct
-          print('Type = read')
+          # print('Type = read')
           self.instruct_msg.append(req('rd', i, addr, 0, 0))
           self.instruct_msg.append(resp('rd',i, 0, 0, word))
           self.update_cache_line(addr, line)
@@ -1223,7 +1223,7 @@ class random_test:
           # print(req('rd', i, addr, 0, 0), resp('rd',i, 0, 0, word))
             
         else: # write miss, need to check conflict miss before putting mem line into cache
-          print('Type = write')
+          # print('Type = write')
           self.instruct_msg.append(req('wr', i, addr, 0, rand_data))
           self.instruct_msg.append(resp('wr', i, 0, 0, 0))
           new_line = self.repl_word_in_line(line=line, word=rand_data, word_offset=word_offset)
@@ -1237,8 +1237,8 @@ class random_test:
       #   string += "]"
       #   print(string) 
       #   print(self.LRU)
-    print('Hit count = '+str(hit_count))
-    print('Miss count = '+str(miss_count))
+    # print('Hit count = '+str(hit_count))
+    # print('Miss count = '+str(miss_count))
 
   def get_mem_msg(self, dummy):
     return_msg = []
@@ -1250,20 +1250,20 @@ class random_test:
 #-------------------------------------------------------------------------
 # Instantiate and Initiate Function Level Model
 #-------------------------------------------------------------------------
-rand_test_dmap_1 = random_test(1, 'dmap')
-rand_test_dmap_2 = random_test(2, 'dmap')
-rand_test_dmap_3 = random_test(3, 'dmap')
-rand_test_dmap_4 = random_test(4, 'dmap')
-rand_test_dmap_5 = random_test(5, 'dmap')
-rand_test_dmap_6 = random_test(6, 'dmap')
-rand_test_dmap_7 = random_test(7, 'dmap')
-rand_test_alter_1 = random_test(1, 'alter')
-rand_test_alter_2 = random_test(2, 'alter')
-rand_test_alter_3 = random_test(3, 'alter')
+# rand_test_dmap_1 = random_test(1, 'dmap')
+# rand_test_dmap_2 = random_test(2, 'dmap')
+# rand_test_dmap_3 = random_test(3, 'dmap')
+# rand_test_dmap_4 = random_test(4, 'dmap')
+# rand_test_dmap_5 = random_test(5, 'dmap')
+# rand_test_dmap_6 = random_test(6, 'dmap')
+# rand_test_dmap_7 = random_test(7, 'dmap')
+# rand_test_alter_1 = random_test(1, 'alter')
+# rand_test_alter_2 = random_test(2, 'alter')
+# rand_test_alter_3 = random_test(3, 'alter')
 rand_test_alter_4 = random_test(4, 'alter')
-rand_test_alter_5 = random_test(5, 'alter')
-rand_test_alter_6 = random_test(6, 'alter')
-rand_test_alter_7 = random_test(7, 'alter')
+# rand_test_alter_5 = random_test(5, 'alter')
+# rand_test_alter_6 = random_test(6, 'alter')
+# rand_test_alter_7 = random_test(7, 'alter')
 # print("\n")
 # # i = 0
 # # while i < len(rand_test.instruct_msg)-1:
@@ -1289,13 +1289,13 @@ test_case_table_dmap_random = mk_test_case_table([
   # [ "random_test_1_read",    random_1_rd.rand_1_msg,    random_1_rd.rand_1_mem,     0,    0.0,  0,  0,  0    ],
   # [ "random_test_1_write",   random_1_wr.rand_1_msg,    random_1_wr.rand_1_mem,     0,    0.0,  0,  0,  0    ],
   # [ "random_test_2",         random_2.rand_2_msg,       random_2.rand_2_mem,        0,    0.0,  0,  0,  0    ],
-  [ "rand_test_dmap_1",         rand_test_dmap_1.get_instructs, rand_test_dmap_1.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
-  [ "rand_test_dmap_2",         rand_test_dmap_2.get_instructs, rand_test_dmap_2.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
-  [ "rand_test_dmap_3",         rand_test_dmap_3.get_instructs, rand_test_dmap_3.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
-  [ "rand_test_dmap_4",         rand_test_dmap_4.get_instructs, rand_test_dmap_4.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
-  [ "rand_test_dmap_5",         rand_test_dmap_5.get_instructs, rand_test_dmap_5.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
-  [ "rand_test_dmap_6",         rand_test_dmap_6.get_instructs, rand_test_dmap_6.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
-  [ "rand_test_dmap_7",         rand_test_dmap_7.get_instructs, rand_test_dmap_7.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
+  # [ "rand_test_dmap_1",         rand_test_dmap_1.get_instructs, rand_test_dmap_1.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
+  # [ "rand_test_dmap_2",         rand_test_dmap_2.get_instructs, rand_test_dmap_2.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
+  # [ "rand_test_dmap_3",         rand_test_dmap_3.get_instructs, rand_test_dmap_3.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
+  # [ "rand_test_dmap_4",         rand_test_dmap_4.get_instructs, rand_test_dmap_4.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
+  # [ "rand_test_dmap_5",         rand_test_dmap_5.get_instructs, rand_test_dmap_5.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
+  # [ "rand_test_dmap_6",         rand_test_dmap_6.get_instructs, rand_test_dmap_6.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
+  # [ "rand_test_dmap_7",         rand_test_dmap_7.get_instructs, rand_test_dmap_7.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
   # [ "rand_test_alter_1",         rand_test_alter_1.get_instructs, rand_test_alter_1.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
   # [ "rand_test_alter_2",         rand_test_alter_2.get_instructs, rand_test_alter_2.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
   # [ "rand_test_alter_3",         rand_test_alter_3.get_instructs, rand_test_alter_3.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
@@ -1331,13 +1331,13 @@ test_case_table_asso_random = mk_test_case_table([
   # [ "rand_test_dmap_5",         rand_test_dmap_5.get_instructs, rand_test_dmap_5.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
   # [ "rand_test_dmap_6",         rand_test_dmap_6.get_instructs, rand_test_dmap_6.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
   # [ "rand_test_dmap_7",         rand_test_dmap_7.get_instructs, rand_test_dmap_7.get_mem_msg,    0,    0.0,  0,  0,  0,   ],
-  [ "rand_test_alter_1",         rand_test_alter_1.get_instructs, rand_test_alter_1.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
-  [ "rand_test_alter_2",         rand_test_alter_2.get_instructs, rand_test_alter_2.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
-  [ "rand_test_alter_3",         rand_test_alter_3.get_instructs, rand_test_alter_3.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
+  # [ "rand_test_alter_1",         rand_test_alter_1.get_instructs, rand_test_alter_1.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
+  # [ "rand_test_alter_2",         rand_test_alter_2.get_instructs, rand_test_alter_2.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
+  # [ "rand_test_alter_3",         rand_test_alter_3.get_instructs, rand_test_alter_3.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
   [ "rand_test_alter_4",         rand_test_alter_4.get_instructs, rand_test_alter_4.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
-  [ "rand_test_alter_5",         rand_test_alter_5.get_instructs, rand_test_alter_5.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
-  [ "rand_test_alter_6",         rand_test_alter_6.get_instructs, rand_test_alter_6.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
-  [ "rand_test_alter_7",         rand_test_alter_7.get_instructs, rand_test_alter_7.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
+  # [ "rand_test_alter_5",         rand_test_alter_5.get_instructs, rand_test_alter_5.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
+  # [ "rand_test_alter_6",         rand_test_alter_6.get_instructs, rand_test_alter_6.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
+  # [ "rand_test_alter_7",         rand_test_alter_7.get_instructs, rand_test_alter_7.get_mem_msg,   0,    0.0,  0,  0,  0,   ],
 ])
 
 @pytest.mark.parametrize( **test_case_table_asso_random )
