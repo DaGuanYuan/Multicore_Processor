@@ -86,7 +86,8 @@ def parse_cmdline():
   # LAB TASK: Add choices to --pattern option to use your new patterns
   #'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-  p.add_argument(       "--pattern",  choices=["loop-1d", "loop-2d", "loop-3d"], default="loop-1d" )
+  # p.add_argument(       "--pattern",  choices=["loop-1d", "loop-2d", "loop-3d", "vvadd_inplace_true","vvadd_inplace_false"], default="loop-1d" )
+  p.add_argument(       "--pattern",  choices=["loop-1d", "loop-2d", "loop-3d", "vvadd_inplace_true", "scalar_matrix_mul","vector_matrix_mul","matrix_transposition"], default="loop-1d" )
   p.add_argument(       "--dump-vcd", action="store_true"                                          )
   p.add_argument(       "--stats",    action="store_true"                                          )
   p.add_argument(       "--trace",    action="store_true"                                          )
@@ -145,7 +146,7 @@ def loop_1d( size = 100 ):
 # Pattern: loop-2d
 #-------------------------------------------------------------------------
 
-def loop_2d( size = 65 ):
+def loop_2d( size = 100 ):
 
   src_msgs  = []
   sink_msgs = []
@@ -207,6 +208,149 @@ def loop_3d():
 #'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 # LAB TASK: Add more memory access patterns to evaluate your cache
 #'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+# v1 + v2 = v1
+# v1 idx: 0, v2 idx: 0, but with different tags
+# since v1 and v2 have the same idx, first v1 read is a miss, then v2 read is a miss, then write v1 also a miss.
+# As for the next cycle, because v1 is in the cache line, so v1 read is a hit, then v2 miss, and v1 miss again.
+# For the 3rd cycle and 4th cycle, the pattern for the 2nd cycle repeats.
+# When it comes to the 5th cycle, because we are dealing with a new cache line. The first v1 rd will compulsory miss, so the 1st cycle repeates.
+# From this process, we see that the pattern shown from 1st to 4th cycle repeats for 16 times. And in each pattern, the miss rate is 9/12, which is 0.75.
+# However, this is only for the dmap cache, which cannot accommadate v1 and v2 having the same idx in a cache at the same time.
+# For the set-associative cache, which can accommadate both v1 and v2 cache line in the cache, the miss will only be caused by the compulsory miss every time we fetch a new cache line into the cache.
+def vvadd_inplace_true(size = 64):
+  src_msgs  = []
+  sink_msgs = []
+
+  mem_data  = []
+  mem_word  = Bits( 32 )
+
+  # Initialize v1 and v2 memory
+  v1_addr_init, v2_addr_init = 0x00000000, 0x000000100
+  for i in xrange(size):
+    addr = i*4
+    mem_word.value = i
+    mem_data.append( addr )
+    mem_data.append( mem_word.uint() )
+  for i in xrange( size):
+    addr = v2_addr_init + i*4
+    mem_word.value = i
+    mem_data.append( addr )
+    mem_data.append( mem_word.uint() )
+  
+  for i in xrange(size):
+    v1_addr = v1_addr_init + i*4
+    v2_addr = v2_addr_init + i*4
+    data = i
+    src_msgs.append ( mk_req ( 'rd', v1_addr, 0, 0 ) )
+    sink_msgs.append( mk_resp( 'rd', 0, data    ) )
+
+    src_msgs.append ( mk_req ( 'rd', v2_addr, 0, 0 ) )
+    sink_msgs.append( mk_resp( 'rd', 0, data   ) )
+
+    src_msgs.append ( mk_req ( 'wr', v2_addr, 0,  2*data))
+    sink_msgs.append( mk_resp( 'wr', 0, 0       ) )
+
+  return [ src_msgs, sink_msgs, mem_data ]
+
+def scalar_matrix_mul(size = 128):
+  src_msgs  = []
+  sink_msgs = []
+
+  mem_data  = []
+  mem_word  = Bits( 32 )
+
+  matrix_addr, scalar = 0x0, 2
+
+  for i in xrange(size):
+    addr, mem_word.value = i * 4, i
+    mem_data.append( addr )
+    mem_data.append( mem_word.uint() )
+
+  for j in xrange(4):
+    for i in xrange(size / 16):
+      addr = 64 * i + 4 * j
+      data = addr / 4
+      src_msgs.append ( mk_req ( 'rd', addr, 0, 0 ) )
+      sink_msgs.append( mk_resp( 'rd', 0, data    ) )
+
+      src_msgs.append ( mk_req ( 'wr', addr, 0,  scalar*data))
+      sink_msgs.append( mk_resp( 'wr', 0, 0       ) )
+
+  return [ src_msgs, sink_msgs, mem_data ]
+
+def vector_matrix_mul(vector_size = 32, matrix_size = 256):
+  src_msgs  = []
+  sink_msgs = []
+
+  mem_data  = []
+  mem_word  = Bits( 32 )
+  mem_dict = {}
+
+  matrix_addr_init, vector_addr_init = vector_size*4, 0x0
+  for i in xrange(vector_size):
+    addr, mem_word.value = vector_addr_init + i * 4, i
+    mem_data.append( addr )
+    mem_data.append( mem_word.uint() )
+
+    mem_dict[addr] = mem_word.uint()
+
+  for i in xrange(matrix_size):
+    addr, mem_word.value = matrix_addr_init + i * 4, i
+    mem_data.append(addr)
+    mem_data.append(mem_word.uint())
+
+    mem_dict[addr] = mem_word.uint()
+
+  for i in xrange(matrix_size/vector_size):
+    for j in xrange(vector_size):
+        matrix_addr = i*vector_size*4 + j*4 + matrix_addr_init
+        vector_addr = j*4+vector_addr_init
+        vector_data, matrix_data = j, j + i*vector_size
+
+        assert(matrix_data == mem_dict[matrix_addr])
+        assert (vector_data == mem_dict[vector_addr])
+        src_msgs.append ( mk_req ( 'rd', vector_addr, 0, 0 ) )
+        sink_msgs.append( mk_resp( 'rd', 0, vector_data    ) )
+
+        src_msgs.append ( mk_req ( 'rd', matrix_addr, 0, 0 ) )
+        sink_msgs.append( mk_resp( 'rd', 0, matrix_data    ) )
+
+        src_msgs.append ( mk_req ( 'wr', matrix_addr, 0,  vector_data * matrix_data))
+        sink_msgs.append( mk_resp( 'wr', 0, 0       ) )
+  return [ src_msgs, sink_msgs, mem_data ]
+
+
+def matrix_transposition(size = 24):
+  src_msgs  = []
+  sink_msgs = []
+
+  mem_data  = []
+  mem_word  = Bits( 32 )
+
+  matrix_addr = 0x0
+  exchange_temp = 0
+
+  for i in xrange(size*size):
+    addr = i * 4
+    mem_word.value = i
+    mem_data.append( addr )
+    mem_data.append( mem_word.uint() )
+
+  for j in xrange(2):
+    for i in xrange(size):
+      # addr_1 = 4 * i + 32 * j
+      addr_2 = 16 * i + 4 * j
+      # data_1 = addr_1 / 4
+      data_2 = addr_2 / 4
+      # src_msgs.append ( mk_req ( 'rd', addr_1, 0, 0 ) )
+      # sink_msgs.append( mk_resp( 'rd', 0, data_1    ) )
+      src_msgs.append ( mk_req ( 'rd', addr_2, 0, 0 ) )
+      sink_msgs.append( mk_resp( 'rd', 0, data_2    ) )
+
+      # src_msgs.append ( mk_req ( 'wr', addr, 0,  scalar*data))
+      # sink_msgs.append( mk_resp( 'wr', 0, 0       ) )
+
+  return [ src_msgs, sink_msgs, mem_data ]
 
 #-------------------------------------------------------------------------
 # Main
@@ -225,9 +369,14 @@ def main():
   # Determine which pattern to use and create the pattern
 
   pattern_dict = {
-    'loop-1d' : loop_1d,
-    'loop-2d' : loop_2d,
-    'loop-3d' : loop_3d,
+    'loop-1d' :             loop_1d,
+    'loop-2d' :             loop_2d,
+    'loop-3d' :             loop_3d,
+    'vvadd_inplace_true':   vvadd_inplace_true,
+    "vector_matrix_mul":    vector_matrix_mul,
+    "matrix_transposition": matrix_transposition
+    # "scalar_matrix_mul":    scalar_matrix_mul,
+    # 'vvadd_inplace_false':  vvadd_inplace_false
 
     #'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     # LAB TASK: Add your new patterns to this Python dict
