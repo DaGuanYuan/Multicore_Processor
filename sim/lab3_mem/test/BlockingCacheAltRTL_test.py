@@ -88,7 +88,7 @@ def test_set_assoc( test_params, dump_vcd ):
 #-------------------------------------------------------------------------
 
 @pytest.mark.parametrize( **test_case_table_asso_random )
-def test_set_assoc( test_params, dump_vcd ):
+def test_asso_random( test_params, dump_vcd ):
   msgs = test_params.msg_func( 0 )
   if test_params.mem_data_func != None:
     mem  = test_params.mem_data_func( 0 )

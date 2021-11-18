@@ -89,7 +89,7 @@ def test_generic_with_delays( test_params, dump_vcd ):
 #-------------------------------------------------------------------------
 
 @pytest.mark.parametrize( **test_case_table_dmap_random )
-def test_random( test_params, dump_vcd ):
+def test_dmap_random( test_params, dump_vcd ):
   msgs = test_params.msg_func( 0 )
   if test_params.mem_data_func != None:
     mem = test_params.mem_data_func( 0 )
