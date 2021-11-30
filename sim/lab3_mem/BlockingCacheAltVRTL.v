@@ -305,11 +305,11 @@ module lab3_mem_BlockingCacheAltVRTL
 
     endcase
 
-    case (hit)
-      ctrl.cache_hit:                    vc_trace.append_str( trace_str, "(1)" );
-      ctrl.cache_miss:                   vc_trace.append_str( trace_str, "(0)" );
-      default:                           vc_trace.append_str( trace_str, "(x)" );
-    endcase
+    // case (hit)
+    //   // ctrl.cache_hit:                    vc_trace.append_str( trace_str, "(1)" );
+    //   // ctrl.cache_miss:                   vc_trace.append_str( trace_str, "(0)" );
+    //   // default:                           vc_trace.append_str( trace_str, "(x)" );
+    // endcase
     
     $sformat( str1, "%x", dpath.memreq_addr );
     vc_trace.append_str( trace_str, str1 );

@@ -479,6 +479,10 @@ module lab2_proc_ProcAltVRTL
     end else
       vc_trace.append_str( trace_str, { 4064'b0, rv2isa.disasm_tiny( ctrl.inst_X ) } );
 
+    $sformat( str, " %x", dpath.ex_result_X );
+    vc_trace.append_str( trace_str,  " ex result: " );
+    vc_trace.append_str( trace_str,  str );
+
     vc_trace.append_str( trace_str, "|" );
 
 
