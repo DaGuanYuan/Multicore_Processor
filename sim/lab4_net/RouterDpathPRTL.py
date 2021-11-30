@@ -8,7 +8,11 @@ from pclib.ifcs    import NetMsg, InValRdyBundle
 
 # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 # LAB TASK: Include necessary components
-# ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+# ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
+
+from pclib.rtl     import NormalQueue, Crossbar
+
+# ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
 class RouterDpathPRTL( Model ):
 
@@ -40,8 +44,85 @@ class RouterDpathPRTL( Model ):
 
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     # LAB TASK: Other interfaces/additional ports
-    # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
+
+    s.inq0_val  = OutPort( 1 )
+    s.inq0_rdy  = InPort ( 1 )
+    s.inq0_dest = OutPort( clog2(nrouters) )
+
+    s.inq1_val  = OutPort( 1 )
+    s.inq1_rdy  = InPort ( 1 )
+    s.inq1_dest = OutPort( clog2(nrouters) )
+
+    s.inq2_val  = OutPort( 1 )
+    s.inq2_rdy  = InPort ( 1 )
+    s.inq2_dest = OutPort( clog2(nrouters) )
+
+    s.xbar_sel0 = InPort( 2 )
+    s.xbar_sel1 = InPort( 2 )
+    s.xbar_sel2 = InPort( 2 )
+
+    # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
     # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     # LAB TASK: Dpath components
-    # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
+
+    #---------------------------------------------------------------------
+    # Components
+    #---------------------------------------------------------------------
+
+    # Crossbar
+
+    s.xbar = m = Crossbar( 3, msg_type )
+
+    s.connect_pairs(
+      s.xbar_sel0, m.sel[0],
+      s.xbar_sel1, m.sel[1],
+      s.xbar_sel2, m.sel[2],
+
+      s.out0_msg,  m.out[0],
+      s.out1_msg,  m.out[1],
+      s.out2_msg,  m.out[2],
+    )
+
+    # Queue for port 0
+
+    s.in0_queue = m = NormalQueue( 2, msg_type )
+
+    s.connect_pairs(
+      s.in0, m.enq,
+
+      s.inq0_val,    m.deq.val,
+      s.inq0_rdy,    m.deq.rdy,
+      s.inq0_dest,   m.deq.msg.dest,
+      s.xbar.in_[0], m.deq.msg,
+    )
+
+    # Queue for port 1
+
+    s.in1_queue = m = NormalQueue( 2, msg_type )
+
+    s.connect_pairs(
+      s.in1, m.enq,
+
+      s.inq1_val,    m.deq.val,
+      s.inq1_rdy,    m.deq.rdy,
+      s.inq1_dest,   m.deq.msg.dest,
+      s.xbar.in_[1], m.deq.msg,
+    )
+
+    # Queue for port 2
+
+    s.in2_queue = m = NormalQueue( 2, msg_type )
+
+    s.connect_pairs(
+      s.in2, m.enq,
+
+      s.inq2_val,    m.deq.val,
+      s.inq2_rdy,    m.deq.rdy,
+      s.inq2_dest,   m.deq.msg.dest,
+      s.xbar.in_[2], m.deq.msg,
+    )
+
+    # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\

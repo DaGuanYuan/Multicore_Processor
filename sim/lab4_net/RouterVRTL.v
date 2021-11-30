@@ -52,7 +52,23 @@ module lab4_net_RouterVRTL
 
   //''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
   // LAB TASK: Define wires
-  //''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+  //''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
+  logic       inq0_val;
+  logic       inq0_rdy;
+  logic [1:0] inq0_dest;
+
+  logic       inq1_val;
+  logic       inq1_rdy;
+  logic [1:0] inq1_dest;
+
+  logic       inq2_val;
+  logic       inq2_rdy;
+  logic [1:0] inq2_dest;
+
+  logic [1:0] xbar_sel0;
+  logic [1:0] xbar_sel1;
+  logic [1:0] xbar_sel2;
+  //''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
   lab4_net_RouterDpathVRTL
   #(
@@ -87,7 +103,23 @@ module lab4_net_RouterVRTL
 
     //'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     // LAB TASK: Connect datapath
-    //'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    //'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
+    .inq0_val         (inq0_val),
+    .inq0_rdy         (inq0_rdy),
+    .inq0_dest        (inq0_dest),
+
+    .inq1_val         (inq1_val),
+    .inq1_rdy         (inq1_rdy),
+    .inq1_dest        (inq1_dest),
+
+    .inq2_val         (inq2_val),
+    .inq2_rdy         (inq2_rdy),
+    .inq2_dest        (inq2_dest),
+
+    .xbar_sel0        (xbar_sel0),
+    .xbar_sel1        (xbar_sel1),
+    .xbar_sel2        (xbar_sel2)
+    //'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
   );
 
   lab4_net_RouterCtrlVRTL ctrl
@@ -108,7 +140,23 @@ module lab4_net_RouterVRTL
 
     //'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
     // LAB TASK: Connect control unit
-    //'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+    //'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
+    .inq0_val         (inq0_val),
+    .inq0_rdy         (inq0_rdy),
+    .inq0_dest        (inq0_dest),
+
+    .inq1_val         (inq1_val),
+    .inq1_rdy         (inq1_rdy),
+    .inq1_dest        (inq1_dest),
+
+    .inq2_val         (inq2_val),
+    .inq2_rdy         (inq2_rdy),
+    .inq2_dest        (inq2_dest),
+
+    .xbar_sel0        (xbar_sel0),
+    .xbar_sel1        (xbar_sel1),
+    .xbar_sel2        (xbar_sel2)
+    //'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
   );
 
   //----------------------------------------------------------------------

@@ -177,7 +177,44 @@ def very_basic_msgs( i ):
 
 #'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 # LAB TASK: Add new test cases
-#'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+#'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
+
+#-------------------------------------------------------------------------
+# Test case: basic messages
+#-------------------------------------------------------------------------
+
+def basic_msgs( i ):
+
+  nrouters = 4
+
+  pre = i-1 if i>0 else 3
+  nxt = i+1 if i<3 else 0
+  opp = i+2 if i<2 else i-2
+
+  # expected odd/even routing result
+
+  if i%2 == 1:  out = 2
+  else:         out = 0
+
+  return mk_router_msgs( nrouters,
+#       tsrc tsink src  dest opaque payload
+    [ ( 0x1, 0x1,  i,   i,   0x00,  0xfe ), # deliver directly
+      # ( 0x0, 0x1,  i,   i,   0x01,  0xee ), # deliver directly, undefined
+      # ( 0x2, 0x1,  i,   i,   0x02,  0xde ), # deliver directly, undefined
+
+      ( 0x0, 0x2,  pre, nxt, 0x03,  0xce ), # pass it through
+      # ( 0x0, 0x2,  nxt, pre, 0x04,  0xbe ), # pass it through, undefined
+      # ( 0x2, 0x0,  pre, nxt, 0x05,  0xae ), # pass it through, undefined
+      ( 0x2, 0x0,  nxt, pre, 0x06,  0x9e ), # pass it through
+
+      # ( 0x1, 0x0,  i,   pre, 0x07,  0x8e ), # route to #0, greedy
+      # ( 0x1, 0x2,  i,   nxt, 0x08,  0x7e ), # route to #2, greedy
+
+      # ( 0x1, out,  i,   opp, 0x09,  0x6e ), # odd/even
+    ]
+  )
+
+#'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 
 #-------------------------------------------------------------------------
 # Test Case Table
@@ -194,7 +231,20 @@ test_case_table = mk_test_case_table([
   # Add more rows to the test case table to leverage the additional lists
   # of request/response messages defined above, but also to test
   # different source/sink random delays.
-  # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+  # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''\/
+
+  [ "basic_0",             basic_msgs(0),      0,        0,        0          ],
+  [ "basic_1",             basic_msgs(1),      1,        0,        0          ],
+  [ "basic_2",             basic_msgs(2),      2,        0,        0          ],
+  [ "basic_3",             basic_msgs(3),      3,        0,        0          ],
+  [ "basic_2_src_delay",   basic_msgs(2),      2,        5,        0          ],
+  [ "basic_2_sink_delay",  basic_msgs(2),      2,        0,        5          ],
+  [ "basic_2_delay",       basic_msgs(2),      2,        6,        6          ],
+  [ "basic_3_src_delay",   basic_msgs(3),      3,        5,        0          ],
+  [ "basic_3_sink_delay",  basic_msgs(3),      3,        0,        5          ],
+  [ "basic_3_delay",       basic_msgs(3),      3,        6,        6          ],
+
+  # ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''/\
 ])
 
 #-------------------------------------------------------------------------
