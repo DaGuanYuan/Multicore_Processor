@@ -248,9 +248,6 @@ module lab5_mcore_MultiCoreVRTL
     CORES_CACHES[3].icache.line_trace( trace_str );
     CORES_CACHES[3].proc.line_trace( trace_str );
 
-    // dcache.line_trace( trace_str );
-    // $sformat( str, " %x", dmemresp_msg );
-    // vc_trace.append_str( trace_str,  str );
   end
   `VC_TRACE_END
 

@@ -118,14 +118,8 @@ int main( int argc, char* argv[] )
   // Because we need in-place sorting, we need to create a mutable temp
   // array.
   int temp0[size];
-  int temp1[size];
-  int temp2[size];
-  int temp3[size];
   for ( i = 0; i < size; i++ ) {
     temp0[i] = src[i];
-    temp1[i] = src[i];
-    temp2[i] = src[i];
-    temp3[i] = src[i];
   }
 
   // '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -133,9 +127,9 @@ int main( int argc, char* argv[] )
   // '''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
   int block_size = size / 4;
   arg_t arg0 = {temp0, 0,             block_size};
-  arg_t arg1 = {temp1, block_size,    2*block_size};
-  arg_t arg2 = {temp2, 2*block_size,  3*block_size};
-  arg_t arg3 = {temp3, 3*block_size,  size};
+  arg_t arg1 = {temp0, block_size,    2*block_size};
+  arg_t arg2 = {temp0, 2*block_size,  3*block_size};
+  arg_t arg3 = {temp0, 3*block_size,  size};
 
   // Spawn work onto cores 1, 2, and 3.
 
@@ -167,22 +161,22 @@ int main( int argc, char* argv[] )
     int min = 0x7fffffff;
     if (temp0[temp0_ptr] < min && temp0_ptr < block_size)
       min = temp0[temp0_ptr];
-    if (temp1[temp1_ptr] < min && temp1_ptr < 2*block_size)
-      min = temp1[temp1_ptr];
-    if (temp2[temp2_ptr] < min && temp2_ptr < 3*block_size)
-      min = temp2[temp2_ptr];
-    if (temp3[temp3_ptr] < min && temp3_ptr < size)
-      min = temp3[temp3_ptr];
+    if (temp0[temp1_ptr] < min && temp1_ptr < 2*block_size)
+      min = temp0[temp1_ptr];
+    if (temp0[temp2_ptr] < min && temp2_ptr < 3*block_size)
+      min = temp0[temp2_ptr];
+    if (temp0[temp3_ptr] < min && temp3_ptr < size)
+      min = temp0[temp3_ptr];
 
     dest[i] = min;
 
     if (temp0[temp0_ptr] == dest[i])
       temp0_ptr += 1;
-    else if (temp1[temp1_ptr] == dest[i])
+    else if (temp0[temp1_ptr] == dest[i])
       temp1_ptr += 1;
-    else if (temp2[temp2_ptr] == dest[i])
+    else if (temp0[temp2_ptr] == dest[i])
       temp2_ptr += 1;
-    else if (temp3[temp3_ptr] == dest[i])
+    else if (temp0[temp3_ptr] == dest[i])
       temp3_ptr += 1;
   }
 
